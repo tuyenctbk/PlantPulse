@@ -1,5 +1,8 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import kotlinx.coroutines.launch
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -43,14 +46,11 @@ data class OnboardingPageData(
     val illustrationContent: @Composable () -> Unit
 )
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun OnboardingScreen(
     onComplete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var currentPageIndex by remember { mutableStateOf(0) }
-
     val pages = listOf(
         OnboardingPageData(
             title = "Welcome to PlantPulse",
@@ -91,6 +91,8 @@ fun OnboardingScreen(
     )
 
     val pageCount = pages.size
+    val pagerState = rememberPagerState(pageCount = { pageCount })
+    val coroutineScope = rememberCoroutineScope()
 
     BoxWithConstraints(
         modifier = modifier
@@ -138,7 +140,7 @@ fun OnboardingScreen(
                 }
             }
 
-            // Adaptive Body Container
+            // Adaptive Body Container with HorizontalPager
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -156,18 +158,9 @@ fun OnboardingScreen(
                         .widthIn(max = 560.dp)
                         .fillMaxHeight(if (isWidescreen) 0.85f else 0.95f)
                 ) {
-                    AnimatedContent(
-                        targetState = currentPageIndex,
-                        transitionSpec = {
-                            if (targetState > initialState) {
-                                (slideInHorizontally { width -> width } + fadeIn()).togetherWith(
-                                    slideOutHorizontally { width -> -width } + fadeOut())
-                            } else {
-                                (slideInHorizontally { width -> -width } + fadeIn()).togetherWith(
-                                    slideOutHorizontally { width -> width } + fadeOut())
-                            }
-                        },
-                        label = "OnboardingPageTransition"
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxSize()
                     ) { index ->
                         val page = pages[index]
                         Column(
@@ -254,8 +247,8 @@ fun OnboardingScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     repeat(pageCount) { i ->
-                        val active = i == currentPageIndex
-                        val width by animateDpAsState(targetValue = if (active) 24.dp else 8.dp)
+                        val active = i == pagerState.currentPage
+                        val width by animateDpAsState(targetValue = if (active) 24.dp else 8.dp, label = "DotWidth")
                         val color = if (active) ForestGreen else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
 
                         Box(
@@ -264,7 +257,11 @@ fun OnboardingScreen(
                                 .width(width)
                                 .clip(CircleShape)
                                 .background(color)
-                                .clickable { currentPageIndex = i }
+                                .clickable {
+                                    coroutineScope.launch {
+                                        pagerState.animateScrollToPage(i)
+                                    }
+                                }
                         )
                     }
                 }
@@ -272,8 +269,10 @@ fun OnboardingScreen(
                 // Next / Finish Button
                 Button(
                     onClick = {
-                        if (currentPageIndex < pageCount - 1) {
-                            currentPageIndex++
+                        if (pagerState.currentPage < pageCount - 1) {
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                            }
                         } else {
                             onComplete()
                         }
@@ -282,11 +281,12 @@ fun OnboardingScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = ForestGreen),
                     modifier = Modifier.height(52.dp)
                 ) {
+                    val isLast = pagerState.currentPage == pageCount - 1
                     AnimatedContent(
-                        targetState = currentPageIndex == pageCount - 1,
+                        targetState = isLast,
                         label = "ButtonTextTransition"
-                    ) { isLast ->
-                        if (isLast) {
+                    ) { last ->
+                        if (last) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
