@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">PlantPulse</string>
+    <string name="tab_today">Today</string>
+    <string name="tab_jungle">My Jungle</string>
+    <string name="tab_analytics">Analytics</string>
+    <string name="add_plant">Add Plant</string>
+    <string name="todays_jungle_care">TODAY\'S JUNGLE CARE</string>
+    <string name="room_groups">ROOM GROUPS</string>
+    <string name="search_plants">Search plant name, species, or room...</string>
+    <string name="all_hydrated">All Plants Hydrated! ✨</string>
+</resources>

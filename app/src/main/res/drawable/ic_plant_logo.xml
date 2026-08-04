@@ -1,0 +1,41 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+    <path
+        android:pathData="M15,20 C15,11.7 21.7,5 30,5 L90,5 C98.3,5 105,11.7 105,20 L105,100 C105,108.3 98.3,115 90,115 L30,115 C21.7,115 15,108.3 15,100 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="0"
+                android:startY="0"
+                android:endX="120"
+                android:endY="120"
+                android:type="linear">
+                <item android:color="#064E3B" android:offset="0.0" />
+                <item android:color="#047857" android:offset="0.6" />
+                <item android:color="#10B981" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Leaf emblem -->
+    <path
+        android:fillColor="#ECFDF5"
+        android:pathData="M60,25 C42,25 32,40 32,60 C32,75 44,85 60,85 C76,85 88,75 88,60 C88,40 78,25 60,25 Z" />
+    <path
+        android:fillColor="#10B981"
+        android:pathData="M60,30 C46,30 38,43 38,60 C38,71 46,78 60,78 C74,78 82,71 82,60 C82,43 74,30 60,30 Z" />
+    <path
+        android:strokeColor="#A7F3D0"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M60,74 L60,38 M60,58 L48,48 M60,52 L72,44" />
+    <!-- Pulse Line overlay -->
+    <path
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M25,60 L42,60 L48,45 L54,75 L62,35 L68,68 L74,55 L80,60 L95,60" />
+</vector>

@@ -1,0 +1,6 @@
+{
+  "name": "PlantPulse",
+  "description": "Local-first plant water & care reminder with smart seasonal schedules, room grouping, and growth photo timeline.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
