@@ -112,6 +112,23 @@ class PlantRepository(
         }
     }
 
+    suspend fun waterPlants(plantIds: List<Long>) {
+        val now = System.currentTimeMillis()
+        plantIds.forEach { plantId ->
+            val plant = plantDao.getPlantByIdSync(plantId) ?: return@forEach
+            val updated = plant.copy(lastWateredDate = now)
+            plantDao.updatePlant(updated)
+            plantDao.insertCareLog(
+                CareLogEntity(
+                    plantId = plantId,
+                    careType = CareType.WATER.name,
+                    timestamp = now,
+                    note = "Batch room watering"
+                )
+            )
+        }
+    }
+
     suspend fun snoozePlantWatering(plantId: Long, daysToSnooze: Int = 2) {
         val plant = plantDao.getPlantByIdSync(plantId) ?: return
         // Snooze pushes lastWateredDate forward by (daysToSnooze) so the next due calculation moves forward
@@ -167,6 +184,23 @@ class PlantRepository(
 
     suspend fun deleteGrowthPhoto(photo: GrowthPhotoEntity) {
         plantDao.deleteGrowthPhoto(photo)
+    }
+
+    fun getNotesForPlant(plantId: Long): Flow<List<PlantNoteEntity>> =
+        plantDao.getNotesForPlant(plantId)
+
+    suspend fun addPlantNote(plantId: Long, text: String) {
+        plantDao.insertPlantNote(
+            PlantNoteEntity(
+                plantId = plantId,
+                text = text,
+                timestamp = System.currentTimeMillis()
+            )
+        )
+    }
+
+    suspend fun deletePlantNote(note: PlantNoteEntity) {
+        plantDao.deletePlantNote(note)
     }
 
     suspend fun exportDataAsJson(): String {

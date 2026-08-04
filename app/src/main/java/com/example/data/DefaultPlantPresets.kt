@@ -8,7 +8,11 @@ data class PlantPreset(
     val fertilizeIntervalDays: Int,
     val mistIntervalDays: Int,
     val iconKey: String,
-    val description: String
+    val lightRequirement: String,
+    val humidityRequirement: String,
+    val description: String,
+    val isLowLightTolerant: Boolean = false,
+    val isPetFriendly: Boolean = false
 )
 
 object DefaultPlantPresets {
@@ -21,7 +25,11 @@ object DefaultPlantPresets {
             fertilizeIntervalDays = 21,
             mistIntervalDays = 3,
             iconKey = "monstera",
-            description = "Loves indirect bright sunlight & humid air. Water when top 2 inches dry."
+            lightRequirement = "Bright Indirect Sunlight",
+            humidityRequirement = "High Humidity (>60%)",
+            description = "Loves indirect bright sunlight & humid air. Water when top 2 inches dry.",
+            isLowLightTolerant = false,
+            isPetFriendly = false
         ),
         PlantPreset(
             name = "Snake Plant",
@@ -31,7 +39,11 @@ object DefaultPlantPresets {
             fertilizeIntervalDays = 30,
             mistIntervalDays = 14,
             iconKey = "snake_plant",
-            description = "Ultra hardy & air purifying. Let soil dry out completely between waterings."
+            lightRequirement = "Low to Bright Indirect",
+            humidityRequirement = "Low Humidity Tolerant",
+            description = "Ultra hardy & air purifying. Let soil dry out completely between waterings.",
+            isLowLightTolerant = true,
+            isPetFriendly = false
         ),
         PlantPreset(
             name = "Peace Lily",
@@ -41,7 +53,11 @@ object DefaultPlantPresets {
             fertilizeIntervalDays = 14,
             mistIntervalDays = 2,
             iconKey = "peace_lily",
-            description = "Droops dramatically when thirsty. Prefers moist soil and frequent leaf misting."
+            lightRequirement = "Medium Indirect Light",
+            humidityRequirement = "High Humidity / Misting",
+            description = "Droops dramatically when thirsty. Prefers moist soil and frequent leaf misting.",
+            isLowLightTolerant = true,
+            isPetFriendly = false
         ),
         PlantPreset(
             name = "Golden Pothos",
@@ -51,7 +67,11 @@ object DefaultPlantPresets {
             fertilizeIntervalDays = 21,
             mistIntervalDays = 4,
             iconKey = "pothos",
-            description = "Fast trailing vine. Very forgiving, thrives in almost any indoor lighting."
+            lightRequirement = "Low to Bright Indirect",
+            humidityRequirement = "Average Indoor Humidity",
+            description = "Fast trailing vine. Very forgiving, thrives in almost any indoor lighting.",
+            isLowLightTolerant = true,
+            isPetFriendly = false
         ),
         PlantPreset(
             name = "Fiddle Leaf Fig",
@@ -61,7 +81,11 @@ object DefaultPlantPresets {
             fertilizeIntervalDays = 21,
             mistIntervalDays = 5,
             iconKey = "fiddle_leaf",
-            description = "Requires consistent light & watering rhythm. Wipe dust from wide glossy leaves."
+            lightRequirement = "Bright Filtered Sunlight",
+            humidityRequirement = "Moderate to High",
+            description = "Requires consistent light & watering rhythm. Wipe dust from wide glossy leaves.",
+            isLowLightTolerant = false,
+            isPetFriendly = false
         ),
         PlantPreset(
             name = "Aloe Vera",
@@ -71,7 +95,11 @@ object DefaultPlantPresets {
             fertilizeIntervalDays = 30,
             mistIntervalDays = 0,
             iconKey = "aloe",
-            description = "Sun-loving succulent. Stores water in fleshy leaves—avoid overwatering!"
+            lightRequirement = "Direct Sunlight",
+            humidityRequirement = "Low Humidity (Dry Air)",
+            description = "Sun-loving succulent. Stores water in fleshy leaves—avoid overwatering!",
+            isLowLightTolerant = false,
+            isPetFriendly = false
         ),
         PlantPreset(
             name = "Calathea Rattlesnake",
@@ -81,7 +109,11 @@ object DefaultPlantPresets {
             fertilizeIntervalDays = 21,
             mistIntervalDays = 2,
             iconKey = "calathea",
-            description = "Prayer plant with striking foliage. Loves high humidity & distilled water."
+            lightRequirement = "Medium Indirect Light",
+            humidityRequirement = "High Humidity (>65%)",
+            description = "Prayer plant with striking foliage. Loves high humidity & distilled water.",
+            isLowLightTolerant = true,
+            isPetFriendly = true
         ),
         PlantPreset(
             name = "ZZ Plant",
@@ -91,15 +123,73 @@ object DefaultPlantPresets {
             fertilizeIntervalDays = 30,
             mistIntervalDays = 14,
             iconKey = "zz_plant",
-            description = "Indestructible waxy leaves. Thrives on neglect and low ambient light."
+            lightRequirement = "Low to Bright Indirect",
+            humidityRequirement = "Low Humidity Tolerant",
+            description = "Indestructible waxy leaves. Thrives on neglect and low ambient light.",
+            isLowLightTolerant = true,
+            isPetFriendly = false
+        ),
+        PlantPreset(
+            name = "Spider Plant",
+            species = "Chlorophytum comosum",
+            defaultRoom = "Living Room",
+            waterIntervalDays = 7,
+            fertilizeIntervalDays = 21,
+            mistIntervalDays = 3,
+            iconKey = "pothos",
+            lightRequirement = "Bright Indirect Light",
+            humidityRequirement = "Average to High",
+            description = "Produces baby spiderettes. Excellent pet-safe air purifier.",
+            isLowLightTolerant = true,
+            isPetFriendly = true
+        ),
+        PlantPreset(
+            name = "Boston Fern",
+            species = "Nephrolepis exaltata",
+            defaultRoom = "Bathroom",
+            waterIntervalDays = 4,
+            fertilizeIntervalDays = 14,
+            mistIntervalDays = 1,
+            iconKey = "peace_lily",
+            lightRequirement = "Indirect Diffused Light",
+            humidityRequirement = "Very High Humidity",
+            description = "Lush green fronds that thrive in humid bathroom environments.",
+            isLowLightTolerant = true,
+            isPetFriendly = true
+        ),
+        PlantPreset(
+            name = "Rubber Tree",
+            species = "Ficus elastica",
+            defaultRoom = "Living Room",
+            waterIntervalDays = 10,
+            fertilizeIntervalDays = 30,
+            mistIntervalDays = 5,
+            iconKey = "fiddle_leaf",
+            lightRequirement = "Bright Filtered Light",
+            humidityRequirement = "Moderate Indoor Humidity",
+            description = "Stately tree with thick burgundy-green leaves. Let topsoil dry.",
+            isLowLightTolerant = false,
+            isPetFriendly = false
+        ),
+        PlantPreset(
+            name = "Chinese Money Plant",
+            species = "Pilea peperomioides",
+            defaultRoom = "Office Desk",
+            waterIntervalDays = 7,
+            fertilizeIntervalDays = 21,
+            mistIntervalDays = 4,
+            iconKey = "aloe",
+            lightRequirement = "Bright Indirect Light",
+            humidityRequirement = "Average Indoor Humidity",
+            description = "Distinctive round coin-like leaves. Rotate weekly for even growth.",
+            isLowLightTolerant = false,
+            isPetFriendly = true
         )
     )
 
     fun getInitialSeedPlants(): List<PlantEntity> {
         val now = System.currentTimeMillis()
         val oneDayMs = 86400000L
-        val threeDaysMs = 3 * oneDayMs
-        val sixDaysMs = 6 * oneDayMs
 
         return listOf(
             PlantEntity(
@@ -109,8 +199,8 @@ object DefaultPlantPresets {
                 waterIntervalDays = 7,
                 fertilizeIntervalDays = 21,
                 mistIntervalDays = 3,
-                lastWateredDate = now - (7 * oneDayMs), // Due today!
-                lastFertilizedTimestamp = now - (21 * oneDayMs), // Due today!
+                lastWateredDate = now - (7 * oneDayMs),
+                lastFertilizedTimestamp = now - (21 * oneDayMs),
                 lastMistedTimestamp = now - oneDayMs,
                 seasonPresetName = SeasonPreset.SPRING_AUTUMN.name,
                 climateSettingName = ClimateSetting.INDOOR.name,
@@ -124,7 +214,7 @@ object DefaultPlantPresets {
                 waterIntervalDays = 14,
                 fertilizeIntervalDays = 30,
                 mistIntervalDays = 14,
-                lastWateredDate = now - (14 * oneDayMs), // Due today!
+                lastWateredDate = now - (14 * oneDayMs),
                 lastFertilizedTimestamp = now - (10 * oneDayMs),
                 lastMistedTimestamp = now - (5 * oneDayMs),
                 seasonPresetName = SeasonPreset.SPRING_AUTUMN.name,
@@ -139,7 +229,7 @@ object DefaultPlantPresets {
                 waterIntervalDays = 5,
                 fertilizeIntervalDays = 14,
                 mistIntervalDays = 2,
-                lastWateredDate = now - (5 * oneDayMs), // Due today!
+                lastWateredDate = now - (5 * oneDayMs),
                 lastFertilizedTimestamp = now - (2 * oneDayMs),
                 lastMistedTimestamp = now - oneDayMs,
                 seasonPresetName = SeasonPreset.SUMMER.name,
@@ -154,7 +244,7 @@ object DefaultPlantPresets {
                 waterIntervalDays = 6,
                 fertilizeIntervalDays = 21,
                 mistIntervalDays = 4,
-                lastWateredDate = now - (2 * oneDayMs), // 4 days remaining
+                lastWateredDate = now - (2 * oneDayMs),
                 lastFertilizedTimestamp = now - (5 * oneDayMs),
                 lastMistedTimestamp = now,
                 seasonPresetName = SeasonPreset.SPRING_AUTUMN.name,
@@ -169,7 +259,7 @@ object DefaultPlantPresets {
                 waterIntervalDays = 12,
                 fertilizeIntervalDays = 30,
                 mistIntervalDays = 0,
-                lastWateredDate = now - (8 * oneDayMs), // 4 days remaining
+                lastWateredDate = now - (8 * oneDayMs),
                 lastFertilizedTimestamp = now - (15 * oneDayMs),
                 lastMistedTimestamp = now,
                 seasonPresetName = SeasonPreset.SPRING_AUTUMN.name,

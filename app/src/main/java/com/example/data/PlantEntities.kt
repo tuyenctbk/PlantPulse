@@ -56,7 +56,7 @@ data class Plant(
         return runCatching { ClimateSetting.valueOf(climateSettingName) }.getOrDefault(ClimateSetting.INDOOR)
     }
 
-    fun getEffectiveWaterIntervalDays(): Int {
+    fun getEffectiveWaterIntervalDays(weatherMultiplier: Double = 1.0): Int {
         val seasonKey = seasonPresetName
         var baseDays = waterIntervalDays
         if (seasonalWateringFrequency.isNotBlank()) {
@@ -70,19 +70,19 @@ data class Plant(
             }
         }
         val mult = getClimateSetting().multiplier
-        return (baseDays * mult).toInt().coerceAtLeast(1)
+        return (baseDays * mult * weatherMultiplier).toInt().coerceAtLeast(1)
     }
 
-    fun getNextWaterDueTimestamp(): Long {
-        return lastWateredDate + TimeUnit.DAYS.toMillis(getEffectiveWaterIntervalDays().toLong())
+    fun getNextWaterDueTimestamp(weatherMultiplier: Double = 1.0): Long {
+        return lastWateredDate + TimeUnit.DAYS.toMillis(getEffectiveWaterIntervalDays(weatherMultiplier).toLong())
     }
 
-    fun isWaterDue(): Boolean {
-        return System.currentTimeMillis() >= getNextWaterDueTimestamp()
+    fun isWaterDue(weatherMultiplier: Double = 1.0): Boolean {
+        return System.currentTimeMillis() >= getNextWaterDueTimestamp(weatherMultiplier)
     }
 
-    fun getDaysUntilWaterDue(): Int {
-        val diffMs = getNextWaterDueTimestamp() - System.currentTimeMillis()
+    fun getDaysUntilWaterDue(weatherMultiplier: Double = 1.0): Int {
+        val diffMs = getNextWaterDueTimestamp(weatherMultiplier) - System.currentTimeMillis()
         return (diffMs / TimeUnit.DAYS.toMillis(1)).toInt()
     }
 
@@ -122,3 +122,12 @@ data class GrowthPhotoEntity(
     val timestamp: Long = System.currentTimeMillis(),
     val note: String? = null
 )
+
+@Entity(tableName = "plant_notes")
+data class PlantNoteEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val plantId: Long,
+    val text: String,
+    val timestamp: Long = System.currentTimeMillis()
+)
+

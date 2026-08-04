@@ -1,5 +1,9 @@
 package com.example.ui.screens
 
+import android.content.Intent
+import android.provider.CalendarContract
+import android.widget.Toast
+import java.util.concurrent.TimeUnit
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -52,6 +56,10 @@ fun PlantDetailSheet(
     var notes by remember(plant) { mutableStateOf(plant.notes) }
 
     val careLogs by viewModel.getCareLogsForPlant(plant.id).collectAsState(initial = emptyList())
+    val plantNotes by viewModel.getNotesForPlant(plant.id).collectAsState(initial = emptyList())
+    val uiState by viewModel.uiState.collectAsState()
+    val weatherFactor = uiState.weatherAdjustmentFactor
+    var newNoteText by remember { mutableStateOf("") }
 
     // Calculate effective interval live
     val currentBaseWater = baseWaterInterval.toIntOrNull() ?: plant.waterIntervalDays
@@ -199,8 +207,104 @@ fun PlantDetailSheet(
                             )
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    val currentBaseFertilize = baseFertilizeInterval.toIntOrNull() ?: plant.fertilizeIntervalDays
+                    val effectiveFertilizeInterval = (currentBaseFertilize * selectedSeason.multiplier).toInt().coerceAtLeast(1)
+
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surface
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("🧪", fontSize = 20.sp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Feeding Schedule: Every $effectiveFertilizeInterval days\n(Base: $currentBaseFertilize days × ${selectedSeason.name.lowercase()} multiplier)",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
                 }
             }
+
+            // Calendar Export Section
+            Text(
+                text = "CALENDAR INTEGRATION",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = ForestGreen
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                val context = LocalContext.current
+                Button(
+                    onClick = {
+                        val dueTimestamp = plant.getNextWaterDueTimestamp(weatherFactor)
+                        val intent = Intent(Intent.ACTION_INSERT).apply {
+                            data = CalendarContract.Events.CONTENT_URI
+                            putExtra(CalendarContract.Events.TITLE, "💧 Water ${plant.name}")
+                            putExtra(CalendarContract.Events.DESCRIPTION, "Plant care reminder: Water ${plant.name} located in ${plant.roomName}.")
+                            putExtra(CalendarContract.Events.EVENT_LOCATION, plant.roomName)
+                            putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, dueTimestamp)
+                            putExtra(CalendarContract.EXTRA_EVENT_END_TIME, dueTimestamp + 30 * 60 * 1000)
+                        }
+                        try {
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "No calendar app available", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = ForestGreen),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Default.DateRange, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Export Water", style = MaterialTheme.typography.labelMedium)
+                }
+
+                Button(
+                    onClick = {
+                        val currentBaseFertilize = baseFertilizeInterval.toIntOrNull() ?: plant.fertilizeIntervalDays
+                        val effectiveFertilizeInterval = (currentBaseFertilize * selectedSeason.multiplier).toInt().coerceAtLeast(1)
+                        val fertilizeTimestamp = plant.lastFertilizedTimestamp + TimeUnit.DAYS.toMillis(effectiveFertilizeInterval.toLong())
+                        val intent = Intent(Intent.ACTION_INSERT).apply {
+                            data = CalendarContract.Events.CONTENT_URI
+                            putExtra(CalendarContract.Events.TITLE, "🧪 Fertilize ${plant.name}")
+                            putExtra(CalendarContract.Events.DESCRIPTION, "Plant care reminder: Fertilize ${plant.name} located in ${plant.roomName}.")
+                            putExtra(CalendarContract.Events.EVENT_LOCATION, plant.roomName)
+                            putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, fertilizeTimestamp)
+                            putExtra(CalendarContract.EXTRA_EVENT_END_TIME, fertilizeTimestamp + 30 * 60 * 1000)
+                        }
+                        try {
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "No calendar app available", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MintGreen),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Default.DateRange, contentDescription = null, tint = ForestGreen, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Export Feed", style = MaterialTheme.typography.labelMedium, color = ForestGreen)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -289,6 +393,26 @@ fun PlantDetailSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Growth Scrapbook Button
+            Button(
+                onClick = {
+                    viewModel.setActivePlantForDetail(null)
+                    viewModel.setActivePlantForScrapbook(plant)
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ),
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.PhotoCamera, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("📸 Open Growth Scrapbook & Timelapse", fontWeight = FontWeight.Bold)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Save & Delete Buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -324,6 +448,103 @@ fun PlantDetailSheet(
                     shape = RoundedCornerShape(14.dp)
                 ) {
                     Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Plant Notes & Care Observations Journal
+            Text(
+                text = "PLANT OBSERVATIONS & CARE TIPS JOURNAL (${plantNotes.size})",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = ForestGreen
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    OutlinedTextField(
+                        value = newNoteText,
+                        onValueChange = { newNoteText = it },
+                        label = { Text("Add observation or care tip...") },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = {
+                            if (newNoteText.isNotBlank()) {
+                                viewModel.addPlantNote(plant.id, newNoteText)
+                                newNoteText = ""
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = ForestGreen),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Add Note", style = MaterialTheme.typography.labelMedium)
+                    }
+
+                    if (plantNotes.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            plantNotes.forEach { note ->
+                                val dateFormat = SimpleDateFormat("MMM d, yyyy h:mm a", Locale.getDefault())
+                                val formattedDate = dateFormat.format(Date(note.timestamp))
+
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = MaterialTheme.colorScheme.surface,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(10.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = note.text,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Text(
+                                                text = formattedDate,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                fontSize = 10.sp
+                                            )
+                                        }
+                                        IconButton(
+                                            onClick = { viewModel.deletePlantNote(note) },
+                                            modifier = Modifier.size(28.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Delete,
+                                                contentDescription = "Delete Note",
+                                                tint = MaterialTheme.colorScheme.error,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 

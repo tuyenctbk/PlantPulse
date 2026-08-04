@@ -29,7 +29,11 @@ import com.example.data.PlantEntity
 import com.example.ui.PlantUiState
 import com.example.ui.PlantViewModel
 import com.example.ui.components.PlantCard
+import com.example.ui.components.WateringConsistencyDashboardCard
+import com.example.ui.components.WeatherWidgetCard
 import com.example.ui.theme.*
+import com.example.util.TranslationHelper
+import com.example.util.TransKey
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.Date
@@ -41,6 +45,7 @@ fun DashboardScreen(
     uiState: PlantUiState,
     onOpenAddPlant: () -> Unit,
     onOpenPresetPicker: () -> Unit,
+    onOpenEncyclopedia: () -> Unit,
     onOpenScrapbook: (PlantEntity) -> Unit,
     onOpenPlantDetail: (PlantEntity) -> Unit,
     modifier: Modifier = Modifier
@@ -49,8 +54,26 @@ fun DashboardScreen(
     val selectedRoom = uiState.selectedRoomFilter
     val searchQuery = uiState.searchQuery
 
+    val weatherFactor = uiState.weatherAdjustmentFactor
+
+    var isBatchMode by remember { mutableStateOf(false) }
+    var selectedPlantIds by remember { mutableStateOf(setOf<Long>()) }
+
+    LaunchedEffect(selectedRoom, uiState.activeTab) {
+        isBatchMode = false
+        selectedPlantIds = emptySet()
+    }
+
+    val toggleSelection: (Long) -> Unit = { id ->
+        selectedPlantIds = if (selectedPlantIds.contains(id)) {
+            selectedPlantIds - id
+        } else {
+            selectedPlantIds + id
+        }
+    }
+
     // Derived counts
-    val duePlants = remember(allPlants) { allPlants.filter { it.isWaterDue() } }
+    val duePlants = remember(allPlants, weatherFactor) { allPlants.filter { it.isWaterDue(weatherFactor) } }
     val roomList = remember(allPlants) {
         listOf("All") + allPlants.map { it.roomName }.distinct().sorted()
     }
@@ -67,12 +90,13 @@ fun DashboardScreen(
         }
     }
 
-    val dueInCurrentFilter = remember(filteredPlants) { filteredPlants.filter { it.isWaterDue() } }
+    val dueInCurrentFilter = remember(filteredPlants, weatherFactor) { filteredPlants.filter { it.isWaterDue(weatherFactor) } }
 
     Scaffold(
         topBar = {
             var showThemeMenu by remember { mutableStateOf(false) }
             var showOverflowMenu by remember { mutableStateOf(false) }
+            var showLanguageDialog by remember { mutableStateOf(false) }
 
             CenterAlignedTopAppBar(
                 title = {
@@ -102,7 +126,7 @@ fun DashboardScreen(
                                     com.example.ui.theme.ThemeMode.LIGHT -> Icons.Outlined.LightMode
                                     com.example.ui.theme.ThemeMode.DARK -> Icons.Outlined.DarkMode
                                 },
-                                contentDescription = "Theme Mode"
+                                contentDescription = TranslationHelper.translate(uiState.appLanguage, TransKey.THEME_MODE)
                             )
                         }
                         DropdownMenu(
@@ -133,12 +157,24 @@ fun DashboardScreen(
                         )
                     }
 
-                    // Overflow Menu (Share, Backup)
+                    // Encyclopedia Search Button
+                    IconButton(
+                        onClick = onOpenEncyclopedia,
+                        modifier = Modifier.testTag("encyclopedia_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.MenuBook,
+                            contentDescription = "Plant Encyclopedia",
+                            tint = ForestGreen
+                        )
+                    }
+
+                    // Overflow Menu (Share, Backup, Language)
                     Box {
                         IconButton(onClick = { showOverflowMenu = true }) {
                             Icon(
                                 imageVector = Icons.Default.MoreVert,
-                                contentDescription = "More Options"
+                                contentDescription = TranslationHelper.translate(uiState.appLanguage, TransKey.SETTINGS_BACKUP)
                             )
                         }
                         DropdownMenu(
@@ -146,7 +182,7 @@ fun DashboardScreen(
                             onDismissRequest = { showOverflowMenu = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Share PlantPulse 📲") },
+                                text = { Text(TranslationHelper.translate(uiState.appLanguage, TransKey.SHARE_PLANTPULSE)) },
                                 leadingIcon = { Icon(Icons.Outlined.Share, contentDescription = null) },
                                 onClick = {
                                     showOverflowMenu = false
@@ -154,14 +190,91 @@ fun DashboardScreen(
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Settings & Backup ⚙️") },
+                                text = { Text(TranslationHelper.translate(uiState.appLanguage, TransKey.SETTINGS_BACKUP)) },
                                 leadingIcon = { Icon(Icons.Outlined.SettingsBackupRestore, contentDescription = null) },
                                 onClick = {
                                     showOverflowMenu = false
                                     viewModel.openBackupDialog(true)
                                 }
                             )
+                            DropdownMenuItem(
+                                text = { Text(TranslationHelper.translate(uiState.appLanguage, TransKey.LANGUAGE_SETTING)) },
+                                leadingIcon = { Icon(Icons.Outlined.Language, contentDescription = null) },
+                                onClick = {
+                                    showOverflowMenu = false
+                                    showLanguageDialog = true
+                                }
+                            )
                         }
+                    }
+
+                    if (showLanguageDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showLanguageDialog = false },
+                            title = {
+                                Text(
+                                    text = TranslationHelper.translate(uiState.appLanguage, TransKey.LANGUAGE_SETTING),
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                            },
+                            text = {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    com.example.util.AppLanguage.values().forEach { lang ->
+                                        Card(
+                                            onClick = {
+                                                viewModel.setLanguage(lang)
+                                                showLanguageDialog = false
+                                            },
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = if (uiState.appLanguage == lang) {
+                                                    MintGreen.copy(alpha = 0.3f)
+                                                } else {
+                                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                                                }
+                                            ),
+                                            border = if (uiState.appLanguage == lang) {
+                                                androidx.compose.foundation.BorderStroke(1.5.dp, ForestGreen)
+                                            } else null,
+                                            shape = RoundedCornerShape(12.dp),
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(56.dp)
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .padding(horizontal = 16.dp),
+                                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                            ) {
+                                                Text(lang.flag, fontSize = 24.sp)
+                                                Text(
+                                                    text = lang.displayName,
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    fontWeight = if (uiState.appLanguage == lang) FontWeight.Bold else FontWeight.Normal,
+                                                    color = if (uiState.appLanguage == lang) ForestGreen else MaterialTheme.colorScheme.onSurface
+                                                )
+                                                if (uiState.appLanguage == lang) {
+                                                    Spacer(modifier = Modifier.weight(1f))
+                                                    Icon(
+                                                        imageVector = Icons.Default.Check,
+                                                        contentDescription = null,
+                                                        tint = ForestGreen,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            confirmButton = {
+                                TextButton(onClick = { showLanguageDialog = false }) {
+                                    Text(TranslationHelper.translate(uiState.appLanguage, TransKey.CANCEL), color = ForestGreen)
+                                }
+                            }
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -173,8 +286,8 @@ fun DashboardScreen(
             if (uiState.activeTab < 2) {
                 ExtendedFloatingActionButton(
                     onClick = onOpenAddPlant,
-                    icon = { Icon(Icons.Default.Add, contentDescription = "Add Plant") },
-                    text = { Text("Add Plant", fontWeight = FontWeight.Bold) },
+                    icon = { Icon(Icons.Default.Add, contentDescription = TranslationHelper.translate(uiState.appLanguage, TransKey.ADD_PLANT)) },
+                    text = { Text(TranslationHelper.translate(uiState.appLanguage, TransKey.ADD_PLANT), fontWeight = FontWeight.Bold) },
                     containerColor = ForestGreen,
                     contentColor = Color.White,
                     modifier = Modifier.testTag("add_plant_fab")
@@ -182,43 +295,105 @@ fun DashboardScreen(
             }
         },
         bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface,
-                tonalElevation = 8.dp
-            ) {
-                NavigationBarItem(
-                    selected = uiState.activeTab == 0,
-                    onClick = { viewModel.setActiveTab(0) },
-                    icon = { Icon(if (uiState.activeTab == 0) Icons.Filled.Today else Icons.Outlined.Today, contentDescription = "Today") },
-                    label = { Text("Today") },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = ForestGreen,
-                        selectedTextColor = ForestGreen,
-                        indicatorColor = MintGreen.copy(alpha = 0.3f)
+            Column {
+                AnimatedVisibility(visible = isBatchMode) {
+                    Surface(
+                        tonalElevation = 8.dp,
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "${selectedPlantIds.size} selected",
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                TextButton(
+                                    onClick = {
+                                        if (selectedPlantIds.size == filteredPlants.size) {
+                                            selectedPlantIds = emptySet()
+                                        } else {
+                                            selectedPlantIds = filteredPlants.map { it.id }.toSet()
+                                        }
+                                    }
+                                ) {
+                                    Text(
+                                        if (selectedPlantIds.size == filteredPlants.size && filteredPlants.isNotEmpty()) {
+                                            TranslationHelper.translate(uiState.appLanguage, TransKey.DESELECT_ALL)
+                                        } else {
+                                            TranslationHelper.translate(uiState.appLanguage, TransKey.SELECT_ALL)
+                                        }
+                                    )
+                                }
+                                Button(
+                                    onClick = {
+                                        viewModel.waterPlants(selectedPlantIds.toList())
+                                        isBatchMode = false
+                                        selectedPlantIds = emptySet()
+                                    },
+                                    enabled = selectedPlantIds.isNotEmpty(),
+                                    colors = ButtonDefaults.buttonColors(containerColor = ForestGreen),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Icon(Icons.Default.WaterDrop, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("${TranslationHelper.translate(uiState.appLanguage, TransKey.WATER_SELECTED)} (${selectedPlantIds.size})")
+                                }
+                                OutlinedButton(
+                                    onClick = { isBatchMode = false; selectedPlantIds = emptySet() },
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Text(TranslationHelper.translate(uiState.appLanguage, TransKey.CANCEL))
+                                }
+                            }
+                        }
+                    }
+                }
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 8.dp
+                ) {
+                    NavigationBarItem(
+                        selected = uiState.activeTab == 0,
+                        onClick = { viewModel.setActiveTab(0) },
+                        icon = { Icon(if (uiState.activeTab == 0) Icons.Filled.Today else Icons.Outlined.Today, contentDescription = TranslationHelper.translate(uiState.appLanguage, TransKey.TAB_TODAY)) },
+                        label = { Text(TranslationHelper.translate(uiState.appLanguage, TransKey.TAB_TODAY)) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = ForestGreen,
+                            selectedTextColor = ForestGreen,
+                            indicatorColor = MintGreen.copy(alpha = 0.3f)
+                        )
                     )
-                )
-                NavigationBarItem(
-                    selected = uiState.activeTab == 1,
-                    onClick = { viewModel.setActiveTab(1) },
-                    icon = { Icon(if (uiState.activeTab == 1) Icons.Filled.LocalFlorist else Icons.Outlined.LocalFlorist, contentDescription = "My Jungle") },
-                    label = { Text("My Jungle") },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = ForestGreen,
-                        selectedTextColor = ForestGreen,
-                        indicatorColor = MintGreen.copy(alpha = 0.3f)
+                    NavigationBarItem(
+                        selected = uiState.activeTab == 1,
+                        onClick = { viewModel.setActiveTab(1) },
+                        icon = { Icon(if (uiState.activeTab == 1) Icons.Filled.LocalFlorist else Icons.Outlined.LocalFlorist, contentDescription = TranslationHelper.translate(uiState.appLanguage, TransKey.TAB_JUNGLE)) },
+                        label = { Text(TranslationHelper.translate(uiState.appLanguage, TransKey.TAB_JUNGLE)) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = ForestGreen,
+                            selectedTextColor = ForestGreen,
+                            indicatorColor = MintGreen.copy(alpha = 0.3f)
+                        )
                     )
-                )
-                NavigationBarItem(
-                    selected = uiState.activeTab == 2,
-                    onClick = { viewModel.setActiveTab(2) },
-                    icon = { Icon(if (uiState.activeTab == 2) Icons.Filled.BarChart else Icons.Outlined.BarChart, contentDescription = "Analytics") },
-                    label = { Text("Analytics") },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = ForestGreen,
-                        selectedTextColor = ForestGreen,
-                        indicatorColor = MintGreen.copy(alpha = 0.3f)
+                    NavigationBarItem(
+                        selected = uiState.activeTab == 2,
+                        onClick = { viewModel.setActiveTab(2) },
+                        icon = { Icon(if (uiState.activeTab == 2) Icons.Filled.BarChart else Icons.Outlined.BarChart, contentDescription = TranslationHelper.translate(uiState.appLanguage, TransKey.TAB_ANALYTICS)) },
+                        label = { Text(TranslationHelper.translate(uiState.appLanguage, TransKey.TAB_ANALYTICS)) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = ForestGreen,
+                            selectedTextColor = ForestGreen,
+                            indicatorColor = MintGreen.copy(alpha = 0.3f)
+                        )
                     )
-                )
+                }
             }
         },
         modifier = modifier
@@ -365,6 +540,18 @@ fun DashboardScreen(
                             }
                         }
 
+                        // 1.5. Weather Widget & Auto-Adjustment Card
+                        item {
+                            WeatherWidgetCard(
+                                city = uiState.selectedCity,
+                                weather = uiState.currentWeather,
+                                isLoading = uiState.isWeatherLoading,
+                                weatherAdjustmentFactor = uiState.weatherAdjustmentFactor,
+                                onOpenCitySelector = { viewModel.openCitySelector(true) },
+                                onRefreshWeather = { viewModel.fetchWeather(uiState.selectedCity) }
+                            )
+                        }
+
                         // 2. Room Grouping Filter Pills (Today)
                         item {
                             RoomGroupingFilterSection(roomList, selectedRoom, allPlants, duePlants, viewModel)
@@ -430,6 +617,9 @@ fun DashboardScreen(
                                                 onLogCareClick = { careType -> viewModel.logCare(plant.id, careType) },
                                                 onScrapbookClick = { onOpenScrapbook(plant) },
                                                 onCardClick = { onOpenPlantDetail(plant) },
+                                                isBatchMode = isBatchMode,
+                                                isSelected = selectedPlantIds.contains(plant.id),
+                                                onSelectToggle = { toggleSelection(plant.id) },
                                                 modifier = Modifier.weight(1f)
                                             )
                                         }
@@ -449,7 +639,10 @@ fun DashboardScreen(
                                         onSnoozeClick = { viewModel.snoozeWatering(plant.id) },
                                         onLogCareClick = { careType -> viewModel.logCare(plant.id, careType) },
                                         onScrapbookClick = { onOpenScrapbook(plant) },
-                                        onCardClick = { onOpenPlantDetail(plant) }
+                                        onCardClick = { onOpenPlantDetail(plant) },
+                                        isBatchMode = isBatchMode,
+                                        isSelected = selectedPlantIds.contains(plant.id),
+                                        onSelectToggle = { toggleSelection(plant.id) }
                                     )
                                 }
                             }
@@ -509,7 +702,7 @@ fun DashboardScreen(
                             OutlinedTextField(
                                 value = searchQuery,
                                 onValueChange = { viewModel.setSearchQuery(it) },
-                                placeholder = { Text("Search plant name, species, or room...") },
+                                placeholder = { Text(TranslationHelper.translate(uiState.appLanguage, TransKey.SEARCH_BAR_PLACEHOLDER)) },
                                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                                 trailingIcon = {
                                     if (searchQuery.isNotEmpty()) {
@@ -548,8 +741,37 @@ fun DashboardScreen(
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
-                                TextButton(onClick = onOpenPresetPicker) {
-                                    Text("+ Quick Add Preset", color = ForestGreen, fontWeight = FontWeight.Bold)
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    if (filteredPlants.isNotEmpty()) {
+                                        OutlinedButton(
+                                            onClick = {
+                                                isBatchMode = !isBatchMode
+                                                if (!isBatchMode) selectedPlantIds = emptySet()
+                                            },
+                                            shape = RoundedCornerShape(10.dp),
+                                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = if (isBatchMode) Icons.Default.Close else Icons.Default.Checklist,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(16.dp),
+                                                tint = ForestGreen
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                text = if (isBatchMode) {
+                                                    TranslationHelper.translate(uiState.appLanguage, TransKey.EXIT_BATCH)
+                                                } else {
+                                                    TranslationHelper.translate(uiState.appLanguage, TransKey.BATCH_SELECT)
+                                                },
+                                                color = ForestGreen,
+                                                style = MaterialTheme.typography.labelMedium
+                                            )
+                                        }
+                                    }
+                                    TextButton(onClick = onOpenPresetPicker) {
+                                        Text(TranslationHelper.translate(uiState.appLanguage, TransKey.QUICK_ADD_PRESET), color = ForestGreen, fontWeight = FontWeight.Bold)
+                                    }
                                 }
                             }
                         }
@@ -610,6 +832,9 @@ fun DashboardScreen(
                                                 onLogCareClick = { careType -> viewModel.logCare(plant.id, careType) },
                                                 onScrapbookClick = { onOpenScrapbook(plant) },
                                                 onCardClick = { onOpenPlantDetail(plant) },
+                                                isBatchMode = isBatchMode,
+                                                isSelected = selectedPlantIds.contains(plant.id),
+                                                onSelectToggle = { toggleSelection(plant.id) },
                                                 modifier = Modifier.weight(1f)
                                             )
                                         }
@@ -629,7 +854,10 @@ fun DashboardScreen(
                                         onSnoozeClick = { viewModel.snoozeWatering(plant.id) },
                                         onLogCareClick = { careType -> viewModel.logCare(plant.id, careType) },
                                         onScrapbookClick = { onOpenScrapbook(plant) },
-                                        onCardClick = { onOpenPlantDetail(plant) }
+                                        onCardClick = { onOpenPlantDetail(plant) },
+                                        isBatchMode = isBatchMode,
+                                        isSelected = selectedPlantIds.contains(plant.id),
+                                        onSelectToggle = { toggleSelection(plant.id) }
                                     )
                                 }
                             }
@@ -684,6 +912,14 @@ fun DashboardScreen(
                                     WeeklyCareChart(logs = careLogs)
                                 }
                             }
+                        }
+
+                        // 3. 30-Day Watering Consistency & Schedule Analysis Dashboard
+                        item {
+                            WateringConsistencyDashboardCard(
+                                plants = allPlants,
+                                careLogs = careLogs
+                            )
                         }
 
                         // 3. Unlocked Achievements / Milestones Row

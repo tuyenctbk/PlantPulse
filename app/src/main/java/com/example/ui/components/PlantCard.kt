@@ -38,6 +38,9 @@ fun PlantCard(
     onLogCareClick: (CareType) -> Unit,
     onScrapbookClick: () -> Unit,
     onCardClick: () -> Unit,
+    isBatchMode: Boolean = false,
+    isSelected: Boolean = false,
+    onSelectToggle: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val isDue = plant.isWaterDue()
@@ -45,7 +48,9 @@ fun PlantCard(
     var expanded by remember { mutableStateOf(false) }
     val isDark = isSystemInDarkTheme()
 
-    val cardContainerColor = if (isDue) {
+    val cardContainerColor = if (isSelected) {
+        MintGreen.copy(alpha = 0.3f)
+    } else if (isDue) {
         if (isDark) Color(0xFF1E3A2F) else LightMint
     } else {
         MaterialTheme.colorScheme.surface
@@ -63,13 +68,15 @@ fun PlantCard(
             containerColor = cardContainerColor,
             contentColor = cardContentColor
         ),
-        border = if (isDue) CardDefaults.outlinedCardBorder().copy(
+        border = if (isSelected) CardDefaults.outlinedCardBorder().copy(
+            brush = androidx.compose.ui.graphics.SolidColor(ForestGreen)
+        ) else if (isDue) CardDefaults.outlinedCardBorder().copy(
             brush = androidx.compose.ui.graphics.SolidColor(if (isDark) MintGreen else ForestGreen)
         ) else CardDefaults.outlinedCardBorder(),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isDue) 3.dp else 1.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isDue || isSelected) 3.dp else 1.dp),
         modifier = modifier
             .fillMaxWidth()
-            .clickable { onCardClick() }
+            .clickable { if (isBatchMode) onSelectToggle() else onCardClick() }
     ) {
         Column(
             modifier = Modifier
@@ -137,6 +144,15 @@ fun PlantCard(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                             )
                         }
+
+                        if (isBatchMode) {
+                            Checkbox(
+                                checked = isSelected,
+                                onCheckedChange = { onSelectToggle() },
+                                colors = CheckboxDefaults.colors(checkedColor = ForestGreen),
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
                     }
 
                     if (plant.species.isNotEmpty()) {
@@ -199,6 +215,23 @@ fun PlantCard(
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+
+                    val isFertilizeDue = plant.isFertilizeDue()
+                    if (isFertilizeDue) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color(0xFFD97706).copy(alpha = 0.2f)
+                        ) {
+                            Text(
+                                text = "🧪 FERTILIZE DUE TODAY",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFD97706),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
                     }

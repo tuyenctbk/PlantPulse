@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -49,6 +50,7 @@ fun GrowthScrapbookSheet(
     val photos by viewModel.getGrowthPhotosForPlant(plant.id).collectAsState(initial = emptyList())
     var noteInput by remember { mutableStateOf("") }
     var selectedPhotoForComparison by remember { mutableStateOf<GrowthPhotoEntity?>(null) }
+    var showCameraCapture by remember { mutableStateOf(false) }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -57,6 +59,22 @@ fun GrowthScrapbookSheet(
             viewModel.addGrowthPhoto(plant.id, uri, noteInput.ifBlank { null })
             noteInput = ""
         }
+    }
+
+    if (showCameraCapture) {
+        CameraCaptureDialog(
+            onImageCaptured = { uri ->
+                viewModel.addGrowthPhoto(plant.id, uri, noteInput.ifBlank { null })
+                noteInput = ""
+                showCameraCapture = false
+            },
+            onError = { exc ->
+                // Error handling if needed
+                showCameraCapture = false
+            },
+            onDismiss = { showCameraCapture = false }
+        )
+        return
     }
 
     ModalBottomSheet(
@@ -121,15 +139,30 @@ fun GrowthScrapbookSheet(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    Button(
-                        onClick = { photoPickerLauncher.launch("image/*") },
-                        colors = ButtonDefaults.buttonColors(containerColor = ForestGreen),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth()
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(Icons.Default.AddAPhoto, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Select Photo from Gallery", fontWeight = FontWeight.Bold)
+                        Button(
+                            onClick = { showCameraCapture = true },
+                            colors = ButtonDefaults.buttonColors(containerColor = ForestGreen),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Take Photo", fontWeight = FontWeight.Bold)
+                        }
+
+                        OutlinedButton(
+                            onClick = { photoPickerLauncher.launch("image/*") },
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Gallery")
+                        }
                     }
 
                     Text(
@@ -143,6 +176,12 @@ fun GrowthScrapbookSheet(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            // Growth Trend & Metadata Visualization Component
+            if (photos.isNotEmpty()) {
+                GrowthTrendChart(photos = photos)
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             // Side-By-Side Timelapse Slider if >= 2 photos
             if (photos.size >= 2) {
@@ -355,5 +394,143 @@ private fun PhotoCompareCard(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun GrowthTrendChart(photos: List<GrowthPhotoEntity>) {
+    val sortedPhotos = remember(photos) { photos.sortedBy { it.timestamp } }
+    val firstTimestamp = sortedPhotos.first().timestamp
+    val lastTimestamp = sortedPhotos.last().timestamp
+    val totalDays = maxOf(1L, (lastTimestamp - firstTimestamp) / (1000 * 60 * 60 * 24))
+    val avgInterval = if (sortedPhotos.size > 1) totalDays / (sortedPhotos.size - 1) else 0L
+    val notesCount = sortedPhotos.count { !it.note.isNullOrBlank() }
+
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("📈", fontSize = 16.sp)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "GROWTH TREND & TIMELINE METRICS",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = ForestGreen
+                    )
+                }
+                Surface(
+                    shape = CircleShape,
+                    color = MintGreen
+                ) {
+                    Text(
+                        text = "$totalDays Days Tracked",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = ForestGreen,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Summary stats row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                MetricItem(label = "Snapshots", value = "${photos.size}", icon = "📸")
+                MetricItem(label = "Avg. Interval", value = if (sortedPhotos.size > 1) "${avgInterval}d" else "N/A", icon = "⏱️")
+                MetricItem(label = "Notes Logged", value = "$notesCount", icon = "📝")
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Canvas Trend Visualization
+            Text(
+                text = "SNAPSHOT FREQUENCY TIMELINE",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.6f), RoundedCornerShape(12.dp))
+                    .padding(12.dp)
+            ) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val width = size.width
+                    val height = size.height
+                    val count = sortedPhotos.size
+                    if (count > 0) {
+                        val stepX = if (count > 1) width / (count - 1) else width / 2f
+                        val points = sortedPhotos.mapIndexed { index, photo ->
+                            val x = if (count > 1) index * stepX else width / 2f
+                            val ratio = (index + 1).toFloat() / count.toFloat()
+                            val y = height - (ratio * (height - 16f)) - 8f
+                            androidx.compose.ui.geometry.Offset(x, y)
+                        }
+
+                        if (points.size > 1) {
+                            val path = androidx.compose.ui.graphics.Path().apply {
+                                moveTo(points.first().x, points.first().y)
+                                for (i in 1 until points.size) {
+                                    lineTo(points[i].x, points[i].y)
+                                }
+                            }
+                            drawPath(
+                                path = path,
+                                color = ForestGreen,
+                                style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                            )
+                        }
+
+                        points.forEach { pt ->
+                            drawCircle(
+                                color = ForestGreen,
+                                radius = 5.dp.toPx(),
+                                center = pt
+                            )
+                            drawCircle(
+                                color = Color.White,
+                                radius = 2.dp.toPx(),
+                                center = pt
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MetricItem(label: String, value: String, icon: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(icon, fontSize = 14.sp)
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(text = value, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 10.sp
+        )
     }
 }

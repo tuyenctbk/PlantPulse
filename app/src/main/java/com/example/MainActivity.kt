@@ -20,6 +20,7 @@ import com.example.ui.theme.PlantPulseTheme
 
 import com.example.ui.components.RateAppDialog
 import com.example.ui.components.ShareAppDialog
+import com.example.ui.components.CitySelectorDialog
 
 class MainActivity : ComponentActivity() {
     private val viewModel: PlantViewModel by viewModels()
@@ -27,6 +28,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        com.example.util.PlantNotificationScheduler.schedulePeriodicReminders(applicationContext)
 
         setContent {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -44,6 +46,8 @@ class MainActivity : ComponentActivity() {
 
                 if (!uiState.hasCompletedOnboarding) {
                     OnboardingScreen(
+                        currentLanguage = uiState.appLanguage,
+                        onLanguageChange = { lang -> viewModel.setLanguage(lang) },
                         onComplete = { viewModel.completeOnboarding() },
                         modifier = Modifier.fillMaxSize()
                     )
@@ -57,6 +61,7 @@ class MainActivity : ComponentActivity() {
                             uiState = uiState,
                             onOpenAddPlant = { viewModel.openAddPlantSheet(true) },
                             onOpenPresetPicker = { viewModel.openPresetPicker(true) },
+                            onOpenEncyclopedia = { viewModel.openEncyclopedia(true) },
                             onOpenScrapbook = { plant -> viewModel.setActivePlantForScrapbook(plant) },
                             onOpenPlantDetail = { plant -> viewModel.setActivePlantForDetail(plant) },
                             modifier = Modifier.padding(innerPadding)
@@ -77,10 +82,25 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
+                        if (uiState.isEncyclopediaOpen) {
+                            PlantEncyclopediaSearchSheet(
+                                onSelectPreset = { preset -> viewModel.addPlantFromPreset(preset) },
+                                onDismiss = { viewModel.openEncyclopedia(false) }
+                            )
+                        }
+
                         if (uiState.isBackupDialogOpen) {
                             BackupRestoreDialog(
                                 viewModel = viewModel,
                                 onDismiss = { viewModel.openBackupDialog(false) }
+                            )
+                        }
+
+                        if (uiState.isCitySelectorOpen) {
+                            CitySelectorDialog(
+                                selectedCity = uiState.selectedCity,
+                                onSelectCity = { city -> viewModel.fetchWeather(city) },
+                                onDismiss = { viewModel.openCitySelector(false) }
                             )
                         }
 

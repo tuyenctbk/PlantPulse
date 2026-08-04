@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import android.content.Context
 import com.example.ui.theme.ThemeMode
 import com.example.util.FirebaseManager
+import com.example.util.AppLanguage
 
 data class PlantUiState(
     val plants: List<PlantEntity> = emptyList(),
@@ -20,10 +21,17 @@ data class PlantUiState(
     val activeTab: Int = 0, // 0: Dashboard/Today, 1: My Jungle, 2: Care History & Analytics
     val isAddPlantSheetOpen: Boolean = false,
     val isPresetPickerOpen: Boolean = false,
+    val isEncyclopediaOpen: Boolean = false,
     val isBackupDialogOpen: Boolean = false,
     val isRateAppDialogPromptOpen: Boolean = false,
     val isShareAppDialogPromptOpen: Boolean = false,
+    val selectedCity: CityLocation = DefaultCities.cities[0],
+    val currentWeather: WeatherResponse? = null,
+    val isWeatherLoading: Boolean = false,
+    val weatherAdjustmentFactor: Double = 1.0,
+    val isCitySelectorOpen: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val appLanguage: AppLanguage = AppLanguage.EN,
     val totalCareActionsCount: Int = 0,
     val hasRatedApp: Boolean = false,
     val hasSharedApp: Boolean = false,
@@ -52,20 +60,28 @@ class PlantViewModel(application: Application) : AndroidViewModel(application) {
         // Load persisted settings
         val savedThemeStr = prefs.getString("theme_mode", ThemeMode.SYSTEM.name) ?: ThemeMode.SYSTEM.name
         val savedTheme = runCatching { ThemeMode.valueOf(savedThemeStr) }.getOrDefault(ThemeMode.SYSTEM)
+        val savedLangStr = prefs.getString("app_language", AppLanguage.EN.name) ?: AppLanguage.EN.name
+        val savedLang = runCatching { AppLanguage.valueOf(savedLangStr) }.getOrDefault(AppLanguage.EN)
         val savedCareCount = prefs.getInt("care_actions_count", 0)
         val savedHasRated = prefs.getBoolean("has_rated_app", false)
         val savedHasShared = prefs.getBoolean("has_shared_app", false)
         val savedHasCompletedOnboarding = prefs.getBoolean("has_completed_onboarding", false)
+        val savedCityName = prefs.getString("selected_city_name", "New York") ?: "New York"
+        val foundCity = DefaultCities.cities.find { it.name == savedCityName } ?: DefaultCities.cities[0]
 
         _uiState.update {
             it.copy(
                 themeMode = savedTheme,
+                appLanguage = savedLang,
                 totalCareActionsCount = savedCareCount,
                 hasRatedApp = savedHasRated,
                 hasSharedApp = savedHasShared,
-                hasCompletedOnboarding = savedHasCompletedOnboarding
+                hasCompletedOnboarding = savedHasCompletedOnboarding,
+                selectedCity = foundCity
             )
         }
+
+        fetchWeather(foundCity)
 
         viewModelScope.launch {
             repository.seedInitialDataIfEmpty()
@@ -83,6 +99,17 @@ class PlantViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { it.copy(themeMode = mode) }
         FirebaseManager.logThemeChanged(getApplication(), mode.name)
         showToast("Theme changed to ${mode.label}")
+    }
+
+    fun setLanguage(lang: AppLanguage) {
+        prefs.edit().putString("app_language", lang.name).apply()
+        _uiState.update { it.copy(appLanguage = lang) }
+        val greeting = when (lang) {
+            AppLanguage.EN -> "Language set to English!"
+            AppLanguage.ES -> "¡Idioma configurado en Español!"
+            AppLanguage.VI -> "Đã chuyển sang Tiếng Việt!"
+        }
+        showToast(greeting)
     }
 
     fun openRateAppPrompt(open: Boolean) {
@@ -181,8 +208,41 @@ class PlantViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { it.copy(isPresetPickerOpen = open) }
     }
 
+    fun openEncyclopedia(open: Boolean) {
+        _uiState.update { it.copy(isEncyclopediaOpen = open) }
+    }
+
     fun openBackupDialog(open: Boolean) {
         _uiState.update { it.copy(isBackupDialogOpen = open) }
+    }
+
+    fun openCitySelector(open: Boolean) {
+        _uiState.update { it.copy(isCitySelectorOpen = open) }
+    }
+
+    fun fetchWeather(city: CityLocation) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isWeatherLoading = true, selectedCity = city, isCitySelectorOpen = false) }
+            prefs.edit().putString("selected_city_name", city.name).apply()
+            try {
+                val response = WeatherApiService.instance.getCurrentWeather(lat = city.latitude, lon = city.longitude)
+                val current = response.current
+                var factor = 1.0
+                if (current != null) {
+                    val temp = current.temperature_2m
+                    val humidity = current.relative_humidity_2m
+                    factor = when {
+                        temp >= 30.0 || humidity <= 35 -> 0.8 // 20% faster
+                        temp >= 25.0 || humidity <= 45 -> 0.9 // 10% faster
+                        temp <= 15.0 || humidity >= 75 -> 1.25 // 25% slower
+                        else -> 1.0
+                    }
+                }
+                _uiState.update { it.copy(currentWeather = response, weatherAdjustmentFactor = factor, isWeatherLoading = false) }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isWeatherLoading = false) }
+            }
+        }
     }
 
     fun setActivePlantForScrapbook(plant: PlantEntity?) {
@@ -225,10 +285,38 @@ class PlantViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun waterPlants(plantIds: List<Long>) {
+        if (plantIds.isEmpty()) return
+        viewModelScope.launch {
+            repository.waterPlants(plantIds)
+            FirebaseManager.logPlantCare(getApplication(), "WATER_BATCH", "${plantIds.size} plants")
+            showToast("🚿 Watered ${plantIds.size} selected plants!")
+            incrementCareActionAndCheckPrompts()
+        }
+    }
+
     fun snoozeWatering(plantId: Long, days: Int = 2) {
         viewModelScope.launch {
             repository.snoozePlantWatering(plantId, days)
             showToast("⏳ Snoozed watering for $days days (Soil still moist)")
+        }
+    }
+
+    fun getNotesForPlant(plantId: Long): Flow<List<PlantNoteEntity>> =
+        repository.getNotesForPlant(plantId)
+
+    fun addPlantNote(plantId: Long, text: String) {
+        if (text.isBlank()) return
+        viewModelScope.launch {
+            repository.addPlantNote(plantId, text.trim())
+            showToast("📝 Note recorded!")
+        }
+    }
+
+    fun deletePlantNote(note: PlantNoteEntity) {
+        viewModelScope.launch {
+            repository.deletePlantNote(note)
+            showToast("🗑️ Note deleted")
         }
     }
 
@@ -279,7 +367,7 @@ class PlantViewModel(application: Application) : AndroidViewModel(application) {
                 iconKey = preset.iconKey
             )
             repository.insertPlant(newPlant)
-            _uiState.update { it.copy(isPresetPickerOpen = false) }
+            _uiState.update { it.copy(isPresetPickerOpen = false, isEncyclopediaOpen = false) }
             showToast("🪴 ${preset.name} added to your garden!")
         }
     }
