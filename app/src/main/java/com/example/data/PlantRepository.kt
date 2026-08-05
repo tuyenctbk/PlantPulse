@@ -25,19 +25,17 @@ class PlantRepository(
         plantDao.getGrowthPhotosForPlant(plantId)
 
     suspend fun seedInitialDataIfEmpty() {
+        val sampleNotes = setOf(
+            "Near south window with sheer curtain.",
+            "Super low maintenance desk buddy.",
+            "Mist leaves frequently.",
+            "Trailing down shelf.",
+            "Loves afternoon sunshine."
+        )
         val current = allPlants.first()
-        if (current.isEmpty()) {
-            val seeds = DefaultPlantPresets.getInitialSeedPlants()
-            seeds.forEach { plant ->
-                val id = plantDao.insertPlant(plant)
-                plantDao.insertCareLog(
-                    CareLogEntity(
-                        plantId = id,
-                        careType = CareType.WATER.name,
-                        timestamp = plant.lastWateredTimestamp,
-                        note = "Initial registration watering"
-                    )
-                )
+        current.forEach { plant ->
+            if (plant.notes in sampleNotes) {
+                plantDao.deletePlant(plant)
             }
         }
     }

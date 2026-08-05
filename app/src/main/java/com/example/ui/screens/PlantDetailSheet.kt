@@ -6,6 +6,7 @@ import android.widget.Toast
 import java.util.concurrent.TimeUnit
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -24,6 +25,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,6 +57,7 @@ fun PlantDetailSheet(
     var selectedSeason by remember(plant) { mutableStateOf(plant.getSeasonPreset()) }
     var selectedClimate by remember(plant) { mutableStateOf(plant.getClimateSetting()) }
     var notes by remember(plant) { mutableStateOf(plant.notes) }
+    var selectedIconKey by remember(plant) { mutableStateOf(plant.iconKey) }
 
     val careLogs by viewModel.getCareLogsForPlant(plant.id).collectAsState(initial = emptyList())
     val plantNotes by viewModel.getNotesForPlant(plant.id).collectAsState(initial = emptyList())
@@ -310,13 +314,44 @@ fun PlantDetailSheet(
 
             // 2. Edit Plant Information
             Text(
-                text = "PLANT SPECIFICATIONS & CARE PROTOCOLS",
+                text = "PLANT SPECIFICATIONS & CUSTOMIZATION",
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(8.dp))
+
+            // Botanical Icon Selector
+            Text(
+                text = "Botanical Avatar Icon:",
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            val availableIcons = listOf("monstera", "snake_plant", "peace_lily", "pothos", "fiddle_leaf", "aloe", "calathea", "zz_plant", "orchid", "cactus", "palm", "flower", "herb", "bonsai", "citrus", "succulent", "ivy")
+
+            androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                items(availableIcons.size) { index ->
+                    val iconKey = availableIcons[index]
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(
+                                if (selectedIconKey == iconKey) MintGreen else MaterialTheme.colorScheme.surfaceVariant
+                            )
+                            .clickable { selectedIconKey = iconKey },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(getPlantEmoji(iconKey), fontSize = 22.sp)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
 
             OutlinedTextField(
                 value = name,
@@ -333,7 +368,7 @@ fun PlantDetailSheet(
                 OutlinedTextField(
                     value = species,
                     onValueChange = { species = it },
-                    label = { Text("Species") },
+                    label = { Text("Species / Variety") },
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.weight(1f)
@@ -342,7 +377,7 @@ fun PlantDetailSheet(
                 OutlinedTextField(
                     value = roomName,
                     onValueChange = { roomName = it },
-                    label = { Text("Room Group") },
+                    label = { Text("Room Location") },
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.weight(1f)
@@ -386,7 +421,7 @@ fun PlantDetailSheet(
             OutlinedTextField(
                 value = notes,
                 onValueChange = { notes = it },
-                label = { Text("Care Notes (Lighting, Soil, etc.)") },
+                label = { Text("Care Notes (Lighting, Soil, Fertilizer, etc.)") },
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -429,7 +464,8 @@ fun PlantDetailSheet(
                             mistIntervalDays = baseMistInterval.toIntOrNull() ?: plant.mistIntervalDays,
                             seasonPresetName = selectedSeason.name,
                             climateSettingName = selectedClimate.name,
-                            notes = notes
+                            notes = notes,
+                            iconKey = selectedIconKey
                         )
                         viewModel.saveCustomPlant(updated)
                     },
@@ -439,7 +475,7 @@ fun PlantDetailSheet(
                 ) {
                     Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Save Changes", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.save_customization), fontWeight = FontWeight.Bold)
                 }
 
                 OutlinedButton(

@@ -12,7 +12,6 @@ import kotlinx.coroutines.launch
 import android.content.Context
 import com.example.ui.theme.ThemeMode
 import com.example.util.FirebaseManager
-import com.example.util.AppLanguage
 
 data class PlantUiState(
     val plants: List<PlantEntity> = emptyList(),
@@ -31,7 +30,6 @@ data class PlantUiState(
     val weatherAdjustmentFactor: Double = 1.0,
     val isCitySelectorOpen: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val appLanguage: AppLanguage = AppLanguage.EN,
     val totalCareActionsCount: Int = 0,
     val hasRatedApp: Boolean = false,
     val hasSharedApp: Boolean = false,
@@ -60,8 +58,6 @@ class PlantViewModel(application: Application) : AndroidViewModel(application) {
         // Load persisted settings
         val savedThemeStr = prefs.getString("theme_mode", ThemeMode.SYSTEM.name) ?: ThemeMode.SYSTEM.name
         val savedTheme = runCatching { ThemeMode.valueOf(savedThemeStr) }.getOrDefault(ThemeMode.SYSTEM)
-        val savedLangStr = prefs.getString("app_language", AppLanguage.EN.name) ?: AppLanguage.EN.name
-        val savedLang = runCatching { AppLanguage.valueOf(savedLangStr) }.getOrDefault(AppLanguage.EN)
         val savedCareCount = prefs.getInt("care_actions_count", 0)
         val savedHasRated = prefs.getBoolean("has_rated_app", false)
         val savedHasShared = prefs.getBoolean("has_shared_app", false)
@@ -72,7 +68,6 @@ class PlantViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update {
             it.copy(
                 themeMode = savedTheme,
-                appLanguage = savedLang,
                 totalCareActionsCount = savedCareCount,
                 hasRatedApp = savedHasRated,
                 hasSharedApp = savedHasShared,
@@ -99,17 +94,6 @@ class PlantViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { it.copy(themeMode = mode) }
         FirebaseManager.logThemeChanged(getApplication(), mode.name)
         showToast("Theme changed to ${mode.label}")
-    }
-
-    fun setLanguage(lang: AppLanguage) {
-        prefs.edit().putString("app_language", lang.name).apply()
-        _uiState.update { it.copy(appLanguage = lang) }
-        val greeting = when (lang) {
-            AppLanguage.EN -> "Language set to English!"
-            AppLanguage.ES -> "¡Idioma configurado en Español!"
-            AppLanguage.VI -> "Đã chuyển sang Tiếng Việt!"
-        }
-        showToast(greeting)
     }
 
     fun openRateAppPrompt(open: Boolean) {

@@ -31,9 +31,9 @@ import com.example.ui.PlantViewModel
 import com.example.ui.components.PlantCard
 import com.example.ui.components.WateringConsistencyDashboardCard
 import com.example.ui.components.WeatherWidgetCard
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import com.example.ui.theme.*
-import com.example.util.TranslationHelper
-import com.example.util.TransKey
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.Date
@@ -126,7 +126,7 @@ fun DashboardScreen(
                                     com.example.ui.theme.ThemeMode.LIGHT -> Icons.Outlined.LightMode
                                     com.example.ui.theme.ThemeMode.DARK -> Icons.Outlined.DarkMode
                                 },
-                                contentDescription = TranslationHelper.translate(uiState.appLanguage, TransKey.THEME_MODE)
+                                contentDescription = stringResource(R.string.theme_mode)
                             )
                         }
                         DropdownMenu(
@@ -169,12 +169,12 @@ fun DashboardScreen(
                         )
                     }
 
-                    // Overflow Menu (Share, Backup, Language)
+                    // Overflow Menu (Share, Backup)
                     Box {
                         IconButton(onClick = { showOverflowMenu = true }) {
                             Icon(
                                 imageVector = Icons.Default.MoreVert,
-                                contentDescription = TranslationHelper.translate(uiState.appLanguage, TransKey.SETTINGS_BACKUP)
+                                contentDescription = stringResource(R.string.settings_backup)
                             )
                         }
                         DropdownMenu(
@@ -182,7 +182,7 @@ fun DashboardScreen(
                             onDismissRequest = { showOverflowMenu = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text(TranslationHelper.translate(uiState.appLanguage, TransKey.SHARE_PLANTPULSE)) },
+                                text = { Text(stringResource(R.string.share_plantpulse)) },
                                 leadingIcon = { Icon(Icons.Outlined.Share, contentDescription = null) },
                                 onClick = {
                                     showOverflowMenu = false
@@ -190,91 +190,14 @@ fun DashboardScreen(
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text(TranslationHelper.translate(uiState.appLanguage, TransKey.SETTINGS_BACKUP)) },
+                                text = { Text(stringResource(R.string.settings_backup)) },
                                 leadingIcon = { Icon(Icons.Outlined.SettingsBackupRestore, contentDescription = null) },
                                 onClick = {
                                     showOverflowMenu = false
                                     viewModel.openBackupDialog(true)
                                 }
                             )
-                            DropdownMenuItem(
-                                text = { Text(TranslationHelper.translate(uiState.appLanguage, TransKey.LANGUAGE_SETTING)) },
-                                leadingIcon = { Icon(Icons.Outlined.Language, contentDescription = null) },
-                                onClick = {
-                                    showOverflowMenu = false
-                                    showLanguageDialog = true
-                                }
-                            )
                         }
-                    }
-
-                    if (showLanguageDialog) {
-                        AlertDialog(
-                            onDismissRequest = { showLanguageDialog = false },
-                            title = {
-                                Text(
-                                    text = TranslationHelper.translate(uiState.appLanguage, TransKey.LANGUAGE_SETTING),
-                                    fontWeight = FontWeight.Bold,
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                            },
-                            text = {
-                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    com.example.util.AppLanguage.values().forEach { lang ->
-                                        Card(
-                                            onClick = {
-                                                viewModel.setLanguage(lang)
-                                                showLanguageDialog = false
-                                            },
-                                            colors = CardDefaults.cardColors(
-                                                containerColor = if (uiState.appLanguage == lang) {
-                                                    MintGreen.copy(alpha = 0.3f)
-                                                } else {
-                                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-                                                }
-                                            ),
-                                            border = if (uiState.appLanguage == lang) {
-                                                androidx.compose.foundation.BorderStroke(1.5.dp, ForestGreen)
-                                            } else null,
-                                            shape = RoundedCornerShape(12.dp),
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(56.dp)
-                                        ) {
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                modifier = Modifier
-                                                    .fillMaxSize()
-                                                    .padding(horizontal = 16.dp),
-                                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                            ) {
-                                                Text(lang.flag, fontSize = 24.sp)
-                                                Text(
-                                                    text = lang.displayName,
-                                                    style = MaterialTheme.typography.bodyLarge,
-                                                    fontWeight = if (uiState.appLanguage == lang) FontWeight.Bold else FontWeight.Normal,
-                                                    color = if (uiState.appLanguage == lang) ForestGreen else MaterialTheme.colorScheme.onSurface
-                                                )
-                                                if (uiState.appLanguage == lang) {
-                                                    Spacer(modifier = Modifier.weight(1f))
-                                                    Icon(
-                                                        imageVector = Icons.Default.Check,
-                                                        contentDescription = null,
-                                                        tint = ForestGreen,
-                                                        modifier = Modifier.size(20.dp)
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            },
-                            confirmButton = {
-                                TextButton(onClick = { showLanguageDialog = false }) {
-                                    Text(TranslationHelper.translate(uiState.appLanguage, TransKey.CANCEL), color = ForestGreen)
-                                }
-                            }
-                        )
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -286,8 +209,8 @@ fun DashboardScreen(
             if (uiState.activeTab < 2) {
                 ExtendedFloatingActionButton(
                     onClick = onOpenAddPlant,
-                    icon = { Icon(Icons.Default.Add, contentDescription = TranslationHelper.translate(uiState.appLanguage, TransKey.ADD_PLANT)) },
-                    text = { Text(TranslationHelper.translate(uiState.appLanguage, TransKey.ADD_PLANT), fontWeight = FontWeight.Bold) },
+                    icon = { Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_plant)) },
+                    text = { Text(stringResource(R.string.add_plant), fontWeight = FontWeight.Bold) },
                     containerColor = ForestGreen,
                     contentColor = Color.White,
                     modifier = Modifier.testTag("add_plant_fab")
@@ -326,9 +249,9 @@ fun DashboardScreen(
                                 ) {
                                     Text(
                                         if (selectedPlantIds.size == filteredPlants.size && filteredPlants.isNotEmpty()) {
-                                            TranslationHelper.translate(uiState.appLanguage, TransKey.DESELECT_ALL)
+                                            stringResource(R.string.deselect_all)
                                         } else {
-                                            TranslationHelper.translate(uiState.appLanguage, TransKey.SELECT_ALL)
+                                            stringResource(R.string.select_all)
                                         }
                                     )
                                 }
@@ -344,13 +267,13 @@ fun DashboardScreen(
                                 ) {
                                     Icon(Icons.Default.WaterDrop, contentDescription = null, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("${TranslationHelper.translate(uiState.appLanguage, TransKey.WATER_SELECTED)} (${selectedPlantIds.size})")
+                                    Text("${stringResource(R.string.water_selected)} (${selectedPlantIds.size})")
                                 }
                                 OutlinedButton(
                                     onClick = { isBatchMode = false; selectedPlantIds = emptySet() },
                                     shape = RoundedCornerShape(12.dp)
                                 ) {
-                                    Text(TranslationHelper.translate(uiState.appLanguage, TransKey.CANCEL))
+                                    Text(stringResource(R.string.cancel))
                                 }
                             }
                         }
@@ -363,8 +286,8 @@ fun DashboardScreen(
                     NavigationBarItem(
                         selected = uiState.activeTab == 0,
                         onClick = { viewModel.setActiveTab(0) },
-                        icon = { Icon(if (uiState.activeTab == 0) Icons.Filled.Today else Icons.Outlined.Today, contentDescription = TranslationHelper.translate(uiState.appLanguage, TransKey.TAB_TODAY)) },
-                        label = { Text(TranslationHelper.translate(uiState.appLanguage, TransKey.TAB_TODAY)) },
+                        icon = { Icon(if (uiState.activeTab == 0) Icons.Filled.Today else Icons.Outlined.Today, contentDescription = stringResource(R.string.tab_today)) },
+                        label = { Text(stringResource(R.string.tab_today)) },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = ForestGreen,
                             selectedTextColor = ForestGreen,
@@ -374,8 +297,8 @@ fun DashboardScreen(
                     NavigationBarItem(
                         selected = uiState.activeTab == 1,
                         onClick = { viewModel.setActiveTab(1) },
-                        icon = { Icon(if (uiState.activeTab == 1) Icons.Filled.LocalFlorist else Icons.Outlined.LocalFlorist, contentDescription = TranslationHelper.translate(uiState.appLanguage, TransKey.TAB_JUNGLE)) },
-                        label = { Text(TranslationHelper.translate(uiState.appLanguage, TransKey.TAB_JUNGLE)) },
+                        icon = { Icon(if (uiState.activeTab == 1) Icons.Filled.LocalFlorist else Icons.Outlined.LocalFlorist, contentDescription = stringResource(R.string.tab_jungle)) },
+                        label = { Text(stringResource(R.string.tab_jungle)) },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = ForestGreen,
                             selectedTextColor = ForestGreen,
@@ -385,8 +308,8 @@ fun DashboardScreen(
                     NavigationBarItem(
                         selected = uiState.activeTab == 2,
                         onClick = { viewModel.setActiveTab(2) },
-                        icon = { Icon(if (uiState.activeTab == 2) Icons.Filled.BarChart else Icons.Outlined.BarChart, contentDescription = TranslationHelper.translate(uiState.appLanguage, TransKey.TAB_ANALYTICS)) },
-                        label = { Text(TranslationHelper.translate(uiState.appLanguage, TransKey.TAB_ANALYTICS)) },
+                        icon = { Icon(if (uiState.activeTab == 2) Icons.Filled.BarChart else Icons.Outlined.BarChart, contentDescription = stringResource(R.string.tab_analytics)) },
+                        label = { Text(stringResource(R.string.tab_analytics)) },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = ForestGreen,
                             selectedTextColor = ForestGreen,
@@ -702,7 +625,7 @@ fun DashboardScreen(
                             OutlinedTextField(
                                 value = searchQuery,
                                 onValueChange = { viewModel.setSearchQuery(it) },
-                                placeholder = { Text(TranslationHelper.translate(uiState.appLanguage, TransKey.SEARCH_BAR_PLACEHOLDER)) },
+                                placeholder = { Text(stringResource(R.string.search_plants)) },
                                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                                 trailingIcon = {
                                     if (searchQuery.isNotEmpty()) {
@@ -760,9 +683,9 @@ fun DashboardScreen(
                                             Spacer(modifier = Modifier.width(4.dp))
                                             Text(
                                                 text = if (isBatchMode) {
-                                                    TranslationHelper.translate(uiState.appLanguage, TransKey.EXIT_BATCH)
+                                                    stringResource(R.string.exit_batch)
                                                 } else {
-                                                    TranslationHelper.translate(uiState.appLanguage, TransKey.BATCH_SELECT)
+                                                    stringResource(R.string.batch_select)
                                                 },
                                                 color = ForestGreen,
                                                 style = MaterialTheme.typography.labelMedium
@@ -770,7 +693,7 @@ fun DashboardScreen(
                                         }
                                     }
                                     TextButton(onClick = onOpenPresetPicker) {
-                                        Text(TranslationHelper.translate(uiState.appLanguage, TransKey.QUICK_ADD_PRESET), color = ForestGreen, fontWeight = FontWeight.Bold)
+                                        Text(stringResource(R.string.quick_add_preset), color = ForestGreen, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }

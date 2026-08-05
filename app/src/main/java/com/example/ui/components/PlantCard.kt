@@ -368,6 +368,17 @@ fun getPlantEmoji(key: String): String {
         "aloe" -> "🪴"
         "calathea" -> "🌱"
         "zz_plant" -> "🌿"
+        "orchid" -> "🌸"
+        "cactus" -> "🌵"
+        "palm" -> "🌴"
+        "fern" -> "🌿"
+        "flower" -> "🌺"
+        "herb" -> "🌱"
+        "bonsai" -> "🪴"
+        "citrus" -> "🍋"
+        "succulent" -> "🪴"
+        "ivy" -> "🍃"
+        "bamboo" -> "🎍"
         else -> "🪴"
     }
 }

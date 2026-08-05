@@ -17,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.LocalFlorist
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,16 +28,14 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.ui.theme.ForestGreen
-import com.example.ui.theme.MintGreen
 import com.example.ui.theme.LightMint
-import com.example.util.AppLanguage
-import com.example.util.TransKey
-import com.example.util.TranslationHelper
 
 data class OnboardingPageData(
     val title: String,
@@ -51,44 +50,42 @@ data class OnboardingPageData(
 
 @Composable
 fun OnboardingScreen(
-    currentLanguage: AppLanguage,
-    onLanguageChange: (AppLanguage) -> Unit,
     onComplete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pages = listOf(
         OnboardingPageData(
-            title = TranslationHelper.translate(currentLanguage, TransKey.WELCOME_TITLE),
-            subtitle = TranslationHelper.translate(currentLanguage, TransKey.WELCOME_SUBTITLE),
-            description = TranslationHelper.translate(currentLanguage, TransKey.WELCOME_DESC),
+            title = stringResource(R.string.welcome_title),
+            subtitle = stringResource(R.string.welcome_subtitle),
+            description = stringResource(R.string.welcome_desc),
             icon = Icons.Outlined.Grass,
             iconBgColor = LightMint,
             iconColor = ForestGreen,
-            badgeText = TranslationHelper.translate(currentLanguage, TransKey.WELCOME_BADGE),
+            badgeText = stringResource(R.string.welcome_badge),
             illustrationContent = {
                 WelcomeIllustration()
             }
         ),
         OnboardingPageData(
-            title = TranslationHelper.translate(currentLanguage, TransKey.SEASONAL_TITLE),
-            subtitle = TranslationHelper.translate(currentLanguage, TransKey.SEASONAL_SUBTITLE),
-            description = TranslationHelper.translate(currentLanguage, TransKey.SEASONAL_DESC),
+            title = stringResource(R.string.seasonal_title),
+            subtitle = stringResource(R.string.seasonal_subtitle),
+            description = stringResource(R.string.seasonal_desc),
             icon = Icons.Outlined.WaterDrop,
             iconBgColor = Color(0xFFE0F2FE),
             iconColor = Color(0xFF0284C7),
-            badgeText = TranslationHelper.translate(currentLanguage, TransKey.SEASONAL_BADGE),
+            badgeText = stringResource(R.string.seasonal_badge),
             illustrationContent = {
                 SeasonalSchedulingIllustration()
             }
         ),
         OnboardingPageData(
-            title = TranslationHelper.translate(currentLanguage, TransKey.GROWTH_TITLE),
-            subtitle = TranslationHelper.translate(currentLanguage, TransKey.GROWTH_SUBTITLE),
-            description = TranslationHelper.translate(currentLanguage, TransKey.GROWTH_DESC),
+            title = stringResource(R.string.growth_title),
+            subtitle = stringResource(R.string.growth_subtitle),
+            description = stringResource(R.string.growth_desc),
             icon = Icons.Outlined.PhotoCamera,
             iconBgColor = Color(0xFFFCE7F3),
             iconColor = Color(0xFFDB2777),
-            badgeText = TranslationHelper.translate(currentLanguage, TransKey.GROWTH_BADGE),
+            badgeText = stringResource(R.string.growth_badge),
             illustrationContent = {
                 ScrapbookIllustration()
             }
@@ -102,27 +99,17 @@ fun OnboardingScreen(
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.surface,
-                        MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-                        LightMint.copy(alpha = 0.3f)
-                    )
-                )
-            )
+            .background(MaterialTheme.colorScheme.background)
     ) {
-        val maxWidth = maxWidth
         val isWidescreen = maxWidth > 600.dp
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
-                .navigationBarsPadding(),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .navigationBarsPadding()
         ) {
-            // Header
+            // Header Row (App Logo & Skip Button)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -130,48 +117,37 @@ fun OnboardingScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "PlantPulse 🪴",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = ForestGreen
-                )
-
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Language Switcher Dropdown
-                    var showLangMenu by remember { mutableStateOf(false) }
-                    Box {
-                        AssistChip(
-                            onClick = { showLangMenu = true },
-                            label = { Text("${currentLanguage.flag} ${currentLanguage.displayName}", style = MaterialTheme.typography.labelMedium) },
-                            leadingIcon = { Icon(Icons.Outlined.Language, contentDescription = null, modifier = Modifier.size(16.dp)) },
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        DropdownMenu(
-                            expanded = showLangMenu,
-                            onDismissRequest = { showLangMenu = false }
-                        ) {
-                            AppLanguage.values().forEach { lang ->
-                                DropdownMenuItem(
-                                    text = { Text("${lang.flag} ${lang.displayName}") },
-                                    onClick = {
-                                        onLanguageChange(lang)
-                                        showLangMenu = false
-                                    }
-                                )
-                            }
+                    Surface(
+                        shape = CircleShape,
+                        color = ForestGreen,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.LocalFlorist,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                     }
+                    Text(
+                        text = stringResource(R.string.app_name),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = ForestGreen
+                    )
+                }
 
-                    TextButton(
-                        onClick = onComplete,
-                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)
-                    ) {
-                        Text(TranslationHelper.translate(currentLanguage, TransKey.SKIP), fontWeight = FontWeight.SemiBold)
-                    }
+                TextButton(
+                    onClick = onComplete,
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Text(stringResource(R.string.skip), fontWeight = FontWeight.SemiBold)
                 }
             }
 
@@ -326,7 +302,7 @@ fun OnboardingScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                Text(TranslationHelper.translate(currentLanguage, TransKey.GET_STARTED), fontWeight = FontWeight.Bold, color = Color.White)
+                                Text(stringResource(R.string.get_started), fontWeight = FontWeight.Bold, color = Color.White)
                                 Icon(Icons.Default.Check, contentDescription = null, tint = Color.White)
                             }
                         } else {
@@ -334,7 +310,7 @@ fun OnboardingScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                Text(TranslationHelper.translate(currentLanguage, TransKey.NEXT), fontWeight = FontWeight.Bold, color = Color.White)
+                                Text(stringResource(R.string.next), fontWeight = FontWeight.Bold, color = Color.White)
                                 Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = Color.White)
                             }
                         }

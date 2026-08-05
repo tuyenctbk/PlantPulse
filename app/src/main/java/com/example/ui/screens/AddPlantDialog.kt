@@ -19,6 +19,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import com.example.data.ClimateSetting
 import com.example.data.PlantEntity
 import com.example.data.SeasonPreset
@@ -51,9 +53,10 @@ fun AddPlantDialog(
 
     var selectedIconKey by remember { mutableStateOf("monstera") }
     var notes by remember { mutableStateOf("") }
+    var showTemplateMenu by remember { mutableStateOf(false) }
 
     val rooms = listOf("Living Room", "Bedroom", "Balcony", "Office Desk", "Kitchen", "Bathroom", "Hallway", "Other +")
-    val icons = listOf("monstera", "snake_plant", "peace_lily", "pothos", "fiddle_leaf", "aloe", "calathea", "zz_plant")
+    val icons = listOf("monstera", "snake_plant", "peace_lily", "pothos", "fiddle_leaf", "aloe", "calathea", "zz_plant", "orchid", "cactus", "palm", "flower", "herb", "bonsai", "citrus", "succulent", "ivy")
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -71,12 +74,82 @@ fun AddPlantDialog(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "🪴 Add New Houseplant",
+                    text = "🪴 ${stringResource(R.string.add_plant)}",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 IconButton(onClick = onDismiss) {
                     Icon(Icons.Default.Close, contentDescription = "Close")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Quick Preset Template Selection
+            Text(
+                text = stringResource(R.string.quick_fill_preset),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = ForestGreen
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Box {
+                OutlinedButton(
+                    onClick = { showTemplateMenu = true },
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = if (name.isBlank()) "Select Preconfigured Plant Template..." else "Template: $name",
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                DropdownMenu(
+                    expanded = showTemplateMenu,
+                    onDismissRequest = { showTemplateMenu = false },
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .heightIn(max = 300.dp)
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("✏️ Custom Plant (Blank Form)", fontWeight = FontWeight.Bold) },
+                        onClick = {
+                            name = ""
+                            species = ""
+                            notes = ""
+                            showTemplateMenu = false
+                        }
+                    )
+                    Divider()
+                    com.example.data.DefaultPlantPresets.presets.forEach { preset ->
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(getPlantEmoji(preset.iconKey), fontSize = 18.sp)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Column {
+                                        Text(preset.name, fontWeight = FontWeight.Bold)
+                                        Text(preset.species, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                }
+                            },
+                            onClick = {
+                                name = preset.name
+                                species = preset.species
+                                roomName = if (rooms.contains(preset.defaultRoom)) preset.defaultRoom else "Living Room"
+                                waterInterval = preset.waterIntervalDays.toString()
+                                springWaterInterval = preset.waterIntervalDays.toString()
+                                fertilizeInterval = preset.fertilizeIntervalDays.toString()
+                                mistInterval = preset.mistIntervalDays.toString()
+                                selectedIconKey = preset.iconKey
+                                notes = preset.description
+                                showTemplateMenu = false
+                            }
+                        )
+                    }
                 }
             }
 
@@ -115,7 +188,7 @@ fun AddPlantDialog(
                 value = name,
                 onValueChange = { name = it },
                 label = { Text("Plant Name *") },
-                placeholder = { Text("e.g. Monstera Deliciosa") },
+                placeholder = { Text("e.g. Monstera Deliciosa or My Custom Rose") },
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
