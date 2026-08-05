@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - PlantPulse</title>
+    <style>
+        :root {
+            --primary: #1B4332;
+            --primary-light: #2D6A4F;
+            --secondary: #40916C;
+            --accent: #D8F3DC;
+            --bg: #F8F9FA;
+            --card-bg: #FFFFFF;
+            --text-main: #212529;
+            --text-muted: #6C757D;
+            --border: #E9ECEF;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary: #52B788;
+                --primary-light: #74C69D;
+                --secondary: #95D5B2;
+                --accent: #1B4332;
+                --bg: #121212;
+                --card-bg: #1E1E1E;
+                --text-main: #E9ECEF;
+                --text-muted: #ADB5BD;
+                --border: #2D2D2D;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-main);
+            background-color: var(--bg);
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 0 0 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .last-updated {
+            font-size: 0.9rem;
+            color: var(--secondary);
+            font-style: italic;
+            margin-top: 10px;
+        }
+
+        main {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+        }
+
+        h2 {
+            color: var(--primary-light);
+            font-size: 1.5rem;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+
+        p, ul, ol {
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        ul, ol {
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        a {
+            color: var(--primary-light);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+        }
+
+        .badge {
+            display: inline-block;
+            background-color: var(--accent);
+            color: var(--primary-light);
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">🌿 PlantPulse</div>
+            <p class="subtitle">Your Smart Botanical Companion</p>
+            <div class="badge">Offline-First & Privacy-Focused</div>
+            <div class="last-updated">Last Updated: August 4, 2026</div>
+        </header>
+
+        <main>
+            <p>At <strong>PlantPulse</strong>, we are committed to protecting your privacy. This Privacy Policy describes how PlantPulse ("we", "us", or "our") collects, uses, and safeguards your information when you use our mobile application.</p>
+            
+            <p>We believe that your botanical data belongs strictly to you. To ensure the highest level of privacy and security, PlantPulse is designed with a <strong>local-first and offline-first architecture</strong>. Most operations and data storage happen entirely on your physical device.</p>
+
+            <h2>1. Information We Collect and Store</h2>
+            <p>Because PlantPulse runs locally, your data is saved in a secure, isolated database on your device:</p>
+            <ul>
+                <li><strong>Plant & Care Profiles:</strong> Custom plant names, species information, room locations, watering schedules, fertilizing frequency, and care log histories (such as when you watered or misted a plant) are saved inside your device's secure SQL local storage.</li>
+                <li><strong>Growth Scrapbook (Photos):</strong> Any pictures you capture or upload to build a visual growth diary are stored locally in your device's app-specific directory. We do not transmit or cache these pictures on cloud web servers.</li>
+                <li><strong>Location & Climate Settings:</strong> In-app settings for localized seasonal scheduling (including location profiles and regional micro-climate inputs) are handled strictly on-device to adjust watering factors dynamically. No precise GPS details are collected or shared.</li>
+            </ul>
+
+            <h2>2. Third-Party Services and Analytics</h2>
+            <p>To help us maintain application stability, detect software bugs, and measure general usage patterns, the application incorporates standard, secure diagnostic modules:</p>
+            <ul>
+                <li><strong>Anonymized Feature Usage:</strong> We may log high-level, aggregate statistics (e.g., completed onboarding stages, batch-watering actions, or database backups) through safe analytics frameworks (such as Firebase Manager). <strong>No personally identifiable information (PII)</strong>, custom plant photos, or individual location traces are ever uploaded.</li>
+                <li><strong>Permissions:</strong>
+                    <ul>
+                        <li><em>Camera Permission:</em> Requested solely when you opt to capture a photo of a plant to add to its visual growth timeline.</li>
+                        <li><em>Storage Permission:</em> Used for local import/export functions to allow backup files to be saved securely on your device.</li>
+                    </ul>
+                </li>
+            </ul>
+
+            <h2>3. Local Backup and Portability</h2>
+            <p>PlantPulse offers a local backup and restore utility. This feature exports your encrypted data to a localized file, which you can choose to store on your device or share with your preferred cloud host. We do not manage, host, or inspect your backup files.</p>
+
+            <h2>4. Data Deletion and Control</h2>
+            <p>Since your information is stored strictly on your phone, you have absolute control over your records:</p>
+            <ul>
+                <li>You can delete individual plants, care history, or scrapbook photos at any time within the application.</li>
+                <li>Uninstalling the PlantPulse application from your device will permanently erase all local databases, photo assets, and preference profiles. We cannot recover this information once deleted.</li>
+            </ul>
+
+            <h2>5. Changes to This Privacy Policy</h2>
+            <p>We may update our Privacy Policy from time to time to reflect new offline features or system improvements. We will notify you of any revisions by updating the "Last Updated" date at the top of this document.</p>
+
+            <h2>6. Contact Us</h2>
+            <p>If you have questions, suggestions, or feedback regarding your privacy or the offline-first operations of PlantPulse, please contact us at:</p>
+            <p><strong>Email:</strong> <a href="mailto:tuyenctbk@gmail.com">tuyenctbk@gmail.com</a></p>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 PlantPulse. Designed to keep your houseplants thriving, privately.</p>
+        </footer>
+    </div>
+</body>
+</html>
