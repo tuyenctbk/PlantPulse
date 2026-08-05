@@ -46,8 +46,6 @@ class MainActivity : ComponentActivity() {
 
                 if (!uiState.hasCompletedOnboarding) {
                     OnboardingScreen(
-                        currentLanguage = uiState.appLanguage,
-                        onLanguageChange = { lang -> viewModel.setLanguage(lang) },
                         onComplete = { viewModel.completeOnboarding() },
                         modifier = Modifier.fillMaxSize()
                     )
