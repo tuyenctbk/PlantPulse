@@ -127,7 +127,10 @@ fun BackupRestoreDialog(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Export Section
+            var backupPassphrase by remember { mutableStateOf("") }
+            var isEncryptedMode by remember { mutableStateOf(true) }
+
+            // Export Section (Encrypted / JSON)
             Card(
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
@@ -137,18 +140,56 @@ fun BackupRestoreDialog(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Download, contentDescription = null, tint = ForestGreen)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Export Plant Jungle JSON", fontWeight = FontWeight.Bold)
+                        Text(
+                            text = if (isEncryptedMode) "🔐 Encrypted Database Backup" else "Export Plant Jungle JSON",
+                            fontWeight = FontWeight.Bold
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(6.dp))
 
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("AES-256 Encryption Mode", style = MaterialTheme.typography.bodySmall)
+                        Switch(
+                            checked = isEncryptedMode,
+                            onCheckedChange = { isEncryptedMode = it }
+                        )
+                    }
+
+                    if (isEncryptedMode) {
+                        OutlinedTextField(
+                            value = backupPassphrase,
+                            onValueChange = { backupPassphrase = it },
+                            label = { Text("Encryption Password / Key") },
+                            placeholder = { Text("Enter secret passphrase...") },
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+
                     Button(
                         onClick = {
-                            viewModel.exportBackupJson { json ->
-                                jsonExportText = json
-                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                val clip = ClipData.newPlainText("PlantPulse Backup JSON", json)
-                                clipboard.setPrimaryClip(clip)
+                            if (isEncryptedMode) {
+                                val pass = backupPassphrase.ifBlank { "PlantPulseKey" }
+                                viewModel.exportEncryptedBackup(pass) { encrypted ->
+                                    jsonExportText = encrypted
+                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                    val clip = ClipData.newPlainText("PlantPulse Encrypted Backup", encrypted)
+                                    clipboard.setPrimaryClip(clip)
+                                }
+                            } else {
+                                viewModel.exportBackupJson { json ->
+                                    jsonExportText = json
+                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                    val clip = ClipData.newPlainText("PlantPulse Backup JSON", json)
+                                    clipboard.setPrimaryClip(clip)
+                                }
                             }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = ForestGreen),
@@ -157,13 +198,13 @@ fun BackupRestoreDialog(
                     ) {
                         Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Generate & Copy JSON Backup")
+                        Text(if (isEncryptedMode) "Generate & Copy Encrypted Backup" else "Generate & Copy JSON Backup")
                     }
 
                     if (jsonExportText.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "✅ Backup JSON copied to clipboard! Save it to your notes or file manager.",
+                            text = if (isEncryptedMode) "✅ Encrypted backup package copied to clipboard!" else "✅ Backup JSON copied to clipboard!",
                             style = MaterialTheme.typography.bodySmall,
                             color = ForestGreen,
                             fontWeight = FontWeight.Bold
@@ -184,7 +225,7 @@ fun BackupRestoreDialog(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Upload, contentDescription = null, tint = ForestGreen)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Restore Data from JSON", fontWeight = FontWeight.Bold)
+                        Text("Restore Database from Backup", fontWeight = FontWeight.Bold)
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -192,19 +233,39 @@ fun BackupRestoreDialog(
                     OutlinedTextField(
                         value = jsonImportInput,
                         onValueChange = { jsonImportInput = it },
-                        placeholder = { Text("Paste exported JSON backup code here...") },
+                        placeholder = { Text("Paste exported JSON or encrypted backup code here...") },
                         maxLines = 4,
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    if (jsonImportInput.contains("PLANT_PULSE_ENCRYPTED_BACKUP")) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = backupPassphrase,
+                            onValueChange = { backupPassphrase = it },
+                            label = { Text("Decryption Password") },
+                            placeholder = { Text("Enter password used to encrypt...") },
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Button(
                         onClick = {
                             if (jsonImportInput.isNotBlank()) {
-                                viewModel.importBackupJson(jsonImportInput)
-                                onDismiss()
+                                if (jsonImportInput.contains("PLANT_PULSE_ENCRYPTED_BACKUP")) {
+                                    val pass = backupPassphrase.ifBlank { "PlantPulseKey" }
+                                    viewModel.importEncryptedBackup(pass, jsonImportInput) { success ->
+                                        if (success) onDismiss()
+                                    }
+                                } else {
+                                    viewModel.importBackupJson(jsonImportInput)
+                                    onDismiss()
+                                }
                             }
                         },
                         enabled = jsonImportInput.isNotBlank(),

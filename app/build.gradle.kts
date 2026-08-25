@@ -1,5 +1,4 @@
 import com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy
-import java.util.Properties
 
 plugins {
   alias(libs.plugins.android.application)
@@ -8,12 +7,6 @@ plugins {
   alias(libs.plugins.roborazzi)
   alias(libs.plugins.secrets)
   alias(libs.plugins.google.services)
-}
-
-val localProperties = Properties()
-val localPropertiesFile = rootProject.file("local.properties")
-if (localPropertiesFile.exists()) {
-  localProperties.load(localPropertiesFile.inputStream())
 }
 
 android {
@@ -31,13 +24,6 @@ android {
   }
 
   signingConfigs {
-    create("release") {
-      val storeFilePath = localProperties.getProperty("RELEASE_STORE_FILE") ?: "common_release_key.jks"
-      storeFile = rootProject.file(storeFilePath)
-      storePassword = localProperties.getProperty("RELEASE_STORE_PASSWORD")
-      keyAlias = localProperties.getProperty("RELEASE_KEY_ALIAS")
-      keyPassword = localProperties.getProperty("RELEASE_KEY_PASSWORD")
-    }
     val debugKeystore = rootProject.file("debug.keystore")
     if (debugKeystore.exists()) {
       create("debugConfig") {
@@ -54,7 +40,6 @@ android {
       isCrunchPngs = false
       isMinifyEnabled = false
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      signingConfig = signingConfigs.getByName("release")
     }
     debug {
       val debugKeystore = rootProject.file("debug.keystore")

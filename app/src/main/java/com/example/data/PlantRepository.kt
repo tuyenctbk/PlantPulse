@@ -250,6 +250,45 @@ class PlantRepository(
         return rootObj.toString(2)
     }
 
+    suspend fun exportEncryptedBackup(passphrase: String): String {
+        val plants = plantDao.getAllPlantsSync()
+        val careLogs = plantDao.getAllCareLogsSync()
+        val photos = plantDao.getAllGrowthPhotosSync()
+        val notes = plantDao.getAllNotesSync()
+
+        return com.example.util.EncryptedDatabaseBackupManager.createEncryptedBackupJson(
+            passphrase = passphrase,
+            plants = plants,
+            careLogs = careLogs,
+            growthPhotos = photos,
+            notes = notes
+        )
+    }
+
+    suspend fun importEncryptedBackup(passphrase: String, encryptedData: String): Boolean {
+        return try {
+            val decrypted = com.example.util.EncryptedDatabaseBackupManager.decryptBackupJson(
+                passphrase = passphrase,
+                encryptedPackageStr = encryptedData
+            )
+
+            plantDao.clearPlants()
+            plantDao.clearCareLogs()
+            plantDao.clearGrowthPhotos()
+            plantDao.clearPlantNotes()
+
+            decrypted.plants.forEach { plantDao.insertPlant(it) }
+            decrypted.careLogs.forEach { plantDao.insertCareLog(it) }
+            decrypted.growthPhotos.forEach { plantDao.insertGrowthPhoto(it) }
+            decrypted.notes.forEach { plantDao.insertPlantNote(it) }
+
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
     suspend fun importDataFromJson(jsonStr: String): Boolean {
         return try {
             val rootObj = JSONObject(jsonStr)

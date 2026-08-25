@@ -32,8 +32,17 @@ interface PlantDao {
     @Query("SELECT * FROM care_logs WHERE plantId = :plantId ORDER BY timestamp DESC")
     fun getCareLogsForPlant(plantId: Long): Flow<List<CareLogEntity>>
 
-    @Query("SELECT * FROM care_logs ORDER BY timestamp DESC LIMIT 100")
+    @Query("SELECT * FROM care_logs ORDER BY timestamp DESC LIMIT 500")
     fun getAllCareLogs(): Flow<List<CareLogEntity>>
+
+    @Query("SELECT * FROM care_logs")
+    suspend fun getAllCareLogsSync(): List<CareLogEntity>
+
+    @Query("SELECT * FROM growth_photos")
+    suspend fun getAllGrowthPhotosSync(): List<GrowthPhotoEntity>
+
+    @Query("SELECT * FROM plant_notes")
+    suspend fun getAllNotesSync(): List<PlantNoteEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCareLog(log: CareLogEntity)

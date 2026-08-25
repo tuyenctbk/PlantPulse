@@ -56,6 +56,20 @@ data class Plant(
         return runCatching { ClimateSetting.valueOf(climateSettingName) }.getOrDefault(ClimateSetting.INDOOR)
     }
 
+    fun getSeasonalWaterInterval(seasonKey: String, defaultDays: Int): Int {
+        if (seasonalWateringFrequency.isNotBlank()) {
+            try {
+                val json = org.json.JSONObject(seasonalWateringFrequency)
+                if (json.has(seasonKey)) {
+                    return json.optInt(seasonKey, defaultDays)
+                }
+            } catch (e: Exception) {
+                // fallback
+            }
+        }
+        return defaultDays
+    }
+
     fun getEffectiveWaterIntervalDays(weatherMultiplier: Double = 1.0): Int {
         val seasonKey = seasonPresetName
         var baseDays = waterIntervalDays
@@ -64,10 +78,14 @@ data class Plant(
                 val json = org.json.JSONObject(seasonalWateringFrequency)
                 if (json.has(seasonKey)) {
                     baseDays = json.optInt(seasonKey, waterIntervalDays)
+                } else {
+                    baseDays = (waterIntervalDays * getSeasonPreset().multiplier).toInt()
                 }
             } catch (e: Exception) {
-                // fallback to base waterIntervalDays
+                baseDays = (waterIntervalDays * getSeasonPreset().multiplier).toInt()
             }
+        } else {
+            baseDays = (waterIntervalDays * getSeasonPreset().multiplier).toInt()
         }
         val mult = getClimateSetting().multiplier
         return (baseDays * mult * weatherMultiplier).toInt().coerceAtLeast(1)

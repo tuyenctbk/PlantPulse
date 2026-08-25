@@ -392,6 +392,25 @@ class PlantViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun exportEncryptedBackup(passphrase: String, onResult: (String) -> Unit) {
+        viewModelScope.launch {
+            val encrypted = repository.exportEncryptedBackup(passphrase)
+            onResult(encrypted)
+        }
+    }
+
+    fun importEncryptedBackup(passphrase: String, encryptedData: String, onComplete: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val success = repository.importEncryptedBackup(passphrase, encryptedData)
+            if (success) {
+                showToast("🔐 Encrypted backup restored successfully!")
+            } else {
+                showToast("❌ Decryption failed! Invalid password or corrupted data.")
+            }
+            onComplete(success)
+        }
+    }
+
     fun importBackupJson(jsonStr: String) {
         viewModelScope.launch {
             val success = repository.importDataFromJson(jsonStr)

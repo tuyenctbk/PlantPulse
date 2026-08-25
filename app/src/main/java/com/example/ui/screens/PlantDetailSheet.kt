@@ -54,13 +54,18 @@ fun PlantDetailSheet(
     var baseWaterInterval by remember(plant) { mutableStateOf(plant.waterIntervalDays.toString()) }
     var baseFertilizeInterval by remember(plant) { mutableStateOf(plant.fertilizeIntervalDays.toString()) }
     var baseMistInterval by remember(plant) { mutableStateOf(plant.mistIntervalDays.toString()) }
+    var springWaterInterval by remember(plant) { mutableStateOf(plant.getSeasonalWaterInterval("SPRING_AUTUMN", plant.waterIntervalDays).toString()) }
+    var summerWaterInterval by remember(plant) { mutableStateOf(plant.getSeasonalWaterInterval("SUMMER", 5).toString()) }
+    var winterWaterInterval by remember(plant) { mutableStateOf(plant.getSeasonalWaterInterval("WINTER", 10).toString()) }
     var selectedSeason by remember(plant) { mutableStateOf(plant.getSeasonPreset()) }
     var selectedClimate by remember(plant) { mutableStateOf(plant.getClimateSetting()) }
     var notes by remember(plant) { mutableStateOf(plant.notes) }
     var selectedIconKey by remember(plant) { mutableStateOf(plant.iconKey) }
 
     val careLogs by viewModel.getCareLogsForPlant(plant.id).collectAsState(initial = emptyList())
+    val growthPhotos by viewModel.getGrowthPhotosForPlant(plant.id).collectAsState(initial = emptyList())
     val plantNotes by viewModel.getNotesForPlant(plant.id).collectAsState(initial = emptyList())
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val weatherFactor = uiState.weatherAdjustmentFactor
     var newNoteText by remember { mutableStateOf("") }
@@ -409,7 +414,48 @@ fun PlantDetailSheet(
                 OutlinedTextField(
                     value = baseMistInterval,
                     onValueChange = { baseMistInterval = it },
-                    label = { Text("🌫️ Mist (Days)") },
+                    label = { Text(stringResource(R.string.mist_days)) },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Seasonal Watering Schedule Mapping Inputs
+            Text(
+                text = stringResource(R.string.seasonal_watering_mapping),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = springWaterInterval,
+                    onValueChange = { springWaterInterval = it },
+                    label = { Text(stringResource(R.string.spring_autumn)) },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.weight(1f)
+                )
+
+                OutlinedTextField(
+                    value = summerWaterInterval,
+                    onValueChange = { summerWaterInterval = it },
+                    label = { Text(stringResource(R.string.summer)) },
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.weight(1f)
+                )
+
+                OutlinedTextField(
+                    value = winterWaterInterval,
+                    onValueChange = { winterWaterInterval = it },
+                    label = { Text(stringResource(R.string.winter)) },
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.weight(1f)
@@ -421,7 +467,7 @@ fun PlantDetailSheet(
             OutlinedTextField(
                 value = notes,
                 onValueChange = { notes = it },
-                label = { Text("Care Notes (Lighting, Soil, Fertilizer, etc.)") },
+                label = { Text(stringResource(R.string.care_notes)) },
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -443,7 +489,40 @@ fun PlantDetailSheet(
             ) {
                 Icon(Icons.Default.PhotoCamera, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("📸 Open Growth Scrapbook & Timelapse", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.open_scrapbook), fontWeight = FontWeight.Bold)
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Export Growth & Care Report Buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = {
+                        com.example.util.ReportExporter.printOrExportPdf(
+                            context, plant, careLogs, growthPhotos, plantNotes
+                        )
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(stringResource(R.string.export_pdf_report), style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                }
+
+                OutlinedButton(
+                    onClick = {
+                        val json = com.example.util.ReportExporter.generatePlantJsonReport(
+                            plant, careLogs, growthPhotos, plantNotes
+                        )
+                        com.example.util.ReportExporter.shareJsonReport(context, json, plant.name)
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(stringResource(R.string.export_json_report), style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -455,6 +534,16 @@ fun PlantDetailSheet(
             ) {
                 Button(
                     onClick = {
+                        val springDays = springWaterInterval.toIntOrNull() ?: plant.waterIntervalDays
+                        val summerDays = summerWaterInterval.toIntOrNull() ?: 5
+                        val winterDays = winterWaterInterval.toIntOrNull() ?: 10
+
+                        val seasonalJson = org.json.JSONObject().apply {
+                            put("SPRING_AUTUMN", springDays)
+                            put("SUMMER", summerDays)
+                            put("WINTER", winterDays)
+                        }.toString()
+
                         val updated = plant.copy(
                             name = name,
                             species = species,
@@ -464,6 +553,7 @@ fun PlantDetailSheet(
                             mistIntervalDays = baseMistInterval.toIntOrNull() ?: plant.mistIntervalDays,
                             seasonPresetName = selectedSeason.name,
                             climateSettingName = selectedClimate.name,
+                            seasonalWateringFrequency = seasonalJson,
                             notes = notes,
                             iconKey = selectedIconKey
                         )
