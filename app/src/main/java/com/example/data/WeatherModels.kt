@@ -7,11 +7,15 @@ data class WeatherResponse(
 )
 
 data class CurrentWeather(
-    val time: String,
-    val interval: Int,
-    val temperature_2m: Double,
-    val relative_humidity_2m: Int,
-    val weather_code: Int
+    val time: String? = null,
+    val interval: Int? = null,
+    val temperature_2m: Double = 20.0,
+    val relative_humidity_2m: Int = 50,
+    val weather_code: Int = 0,
+    val uv_index: Double? = 0.0,
+    val surface_solar_radiation: Double? = 0.0,
+    val precipitation: Double? = 0.0,
+    val rain: Double? = 0.0
 )
 
 data class CityLocation(

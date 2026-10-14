@@ -215,10 +215,19 @@ class PlantViewModel(application: Application) : AndroidViewModel(application) {
                 if (current != null) {
                     val temp = current.temperature_2m
                     val humidity = current.relative_humidity_2m
+                    val uv = current.uv_index ?: 0.0
+                    val solarRad = current.surface_solar_radiation ?: 0.0
+                    val precip = (current.precipitation ?: 0.0) + (current.rain ?: 0.0)
+
                     factor = when {
-                        temp >= 30.0 || humidity <= 35 -> 0.8 // 20% faster
-                        temp >= 25.0 || humidity <= 45 -> 0.9 // 10% faster
-                        temp <= 15.0 || humidity >= 75 -> 1.25 // 25% slower
+                        // Rainy day or heavy rain: Delay watering reminders by 40% (soil wet)
+                        precip > 0.5 || humidity >= 85 -> 1.4
+                        // High humidity or cold weather: Extend watering interval by 25%
+                        humidity >= 75 || temp <= 15.0 -> 1.25
+                        // High UV index, high solar radiation, or heatwave: Accelerate watering by 25%
+                        (temp >= 30.0 || uv >= 6.0 || solarRad >= 500.0) && humidity <= 40 -> 0.75
+                        // Warm/Sunny: Accelerate watering schedule by 15%
+                        temp >= 25.0 || uv >= 5.0 || humidity <= 45 -> 0.85
                         else -> 1.0
                     }
                 }

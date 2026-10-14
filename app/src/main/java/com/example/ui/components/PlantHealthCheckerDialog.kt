@@ -303,6 +303,20 @@ fun PlantHealthCheckerDialog(
                             }
                         }
 
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = ForestGreen.copy(alpha = 0.15f)
+                        ) {
+                            Text(
+                                text = "🔬 Engine: ${diag.engineSource}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = ForestGreen,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+
                         Spacer(modifier = Modifier.height(10.dp))
 
                         if (diag.symptoms.isNotEmpty()) {
