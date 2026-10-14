@@ -143,8 +143,9 @@ class PlantViewModel(application: Application) : AndroidViewModel(application) {
         // 2. Added at least 2 plants to track
         val isEngaged = careCount >= 5 && plants.size >= 2
 
-        // 3. Perfect state (triumph): all registered plants have zero due tasks!
-        val allPlantsHappy = plants.isNotEmpty() && plants.none { it.isAnyCareDue() }
+        // 3. Perfect state (triumph): all registered plants have zero due tasks under current climate!
+        val factor = _uiState.value.weatherAdjustmentFactor
+        val allPlantsHappy = plants.isNotEmpty() && plants.none { it.isAnyCareDue(factor) }
 
         val lastPrompted = prefs.getInt("last_prompted_care_count", 0)
         // Cooldown: at least 8 care actions between automatic prompts if they clicked 'Later'
@@ -253,7 +254,8 @@ class PlantViewModel(application: Application) : AndroidViewModel(application) {
 
     fun waterAllDueInRoom(roomName: String) {
         viewModelScope.launch {
-            repository.waterAllDueInRoom(roomName)
+            val factor = _uiState.value.weatherAdjustmentFactor
+            repository.waterAllDueInRoom(roomName, factor)
             FirebaseManager.logPlantCare(getApplication(), "WATER_ROOM", roomName)
             showToast("🚿 Watered all due plants in $roomName!")
             incrementCareActionAndCheckPrompts()
@@ -262,7 +264,8 @@ class PlantViewModel(application: Application) : AndroidViewModel(application) {
 
     fun waterAllDueTotal() {
         viewModelScope.launch {
-            repository.waterAllDueTotal()
+            val factor = _uiState.value.weatherAdjustmentFactor
+            repository.waterAllDueTotal(factor)
             FirebaseManager.logPlantCare(getApplication(), "WATER_ALL", "Jungle")
             showToast("🚿 All due plants in your jungle watered!")
             incrementCareActionAndCheckPrompts()

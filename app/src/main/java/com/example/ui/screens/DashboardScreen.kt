@@ -1,6 +1,7 @@
 package com.example.ui.screens
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -163,7 +165,7 @@ fun DashboardScreen(
                         modifier = Modifier.testTag("encyclopedia_button")
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.MenuBook,
+                            imageVector = Icons.AutoMirrored.Outlined.MenuBook,
                             contentDescription = "Plant Encyclopedia",
                             tint = ForestGreen
                         )
@@ -338,40 +340,68 @@ fun DashboardScreen(
                 else -> 600.dp
             }
 
-            when (uiState.activeTab) {
-                0 -> {
-                    // TAB 0: TODAY (Dashboard & Due Checklist)
-                    LazyColumn(
-                        contentPadding = PaddingValues(
-                            top = 8.dp,
-                            bottom = 88.dp,
-                            start = 16.dp,
-                            end = 16.dp
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .widthIn(max = maxContentWidth)
-                    ) {
-                        // 1. Hero Status & Care Summary Card
-                        item {
-                            Card(
-                                shape = RoundedCornerShape(24.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(
-                                            brush = Brush.linearGradient(
-                                                colors = listOf(DeepEmerald, ForestGreen)
-                                            ),
-                                            shape = RoundedCornerShape(24.dp)
-                                        )
-                                        .padding(20.dp)
+            val heroInfiniteTransition = rememberInfiniteTransition(label = "heroPulse")
+            val heroGlowAlpha by heroInfiniteTransition.animateFloat(
+                initialValue = 0.85f,
+                targetValue = 1.0f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(1500, easing = FastOutSlowInEasing),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "heroGlowAlpha"
+            )
+
+            AnimatedContent(
+                targetState = uiState.activeTab,
+                transitionSpec = {
+                    if (targetState > initialState) {
+                        (slideInHorizontally { width -> width / 4 } + fadeIn(tween(250)))
+                            .togetherWith(slideOutHorizontally { width -> -width / 4 } + fadeOut(tween(200)))
+                    } else {
+                        (slideInHorizontally { width -> -width / 4 } + fadeIn(tween(250)))
+                            .togetherWith(slideOutHorizontally { width -> width / 4 } + fadeOut(tween(200)))
+                    }
+                },
+                label = "TabContentTransition",
+                modifier = Modifier.fillMaxSize()
+            ) { activeTab ->
+                when (activeTab) {
+                    0 -> {
+                        // TAB 0: TODAY (Dashboard & Due Checklist)
+                        LazyColumn(
+                            contentPadding = PaddingValues(
+                                top = 8.dp,
+                                bottom = 88.dp,
+                                start = 16.dp,
+                                end = 16.dp
+                            ),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .widthIn(max = maxContentWidth)
+                        ) {
+                            // 1. Hero Status & Care Summary Card
+                            item {
+                                Card(
+                                    shape = RoundedCornerShape(24.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(
+                                                brush = Brush.linearGradient(
+                                                    colors = listOf(
+                                                        DeepEmerald.copy(alpha = if (duePlants.isNotEmpty()) heroGlowAlpha else 1f),
+                                                        ForestGreen
+                                                    )
+                                                ),
+                                                shape = RoundedCornerShape(24.dp)
+                                            )
+                                            .padding(20.dp)
+                                    ) {
                                     Column {
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
@@ -477,7 +507,7 @@ fun DashboardScreen(
 
                         // 2. Room Grouping Filter Pills (Today)
                         item {
-                            RoomGroupingFilterSection(roomList, selectedRoom, allPlants, duePlants, viewModel)
+                            RoomGroupingFilterSection(roomList, selectedRoom, allPlants, duePlants, viewModel, weatherFactor)
                         }
 
                         // Room-Specific Water All Button
@@ -543,6 +573,7 @@ fun DashboardScreen(
                                                 isBatchMode = isBatchMode,
                                                 isSelected = selectedPlantIds.contains(plant.id),
                                                 onSelectToggle = { toggleSelection(plant.id) },
+                                                weatherAdjustmentFactor = weatherFactor,
                                                 modifier = Modifier.weight(1f)
                                             )
                                         }
@@ -565,7 +596,8 @@ fun DashboardScreen(
                                         onCardClick = { onOpenPlantDetail(plant) },
                                         isBatchMode = isBatchMode,
                                         isSelected = selectedPlantIds.contains(plant.id),
-                                        onSelectToggle = { toggleSelection(plant.id) }
+                                        onSelectToggle = { toggleSelection(plant.id) },
+                                        weatherAdjustmentFactor = weatherFactor
                                     )
                                 }
                             }
@@ -646,7 +678,7 @@ fun DashboardScreen(
 
                         // 2. Room Filters (Jungle)
                         item {
-                            RoomGroupingFilterSection(roomList, selectedRoom, allPlants, duePlants, viewModel)
+                            RoomGroupingFilterSection(roomList, selectedRoom, allPlants, duePlants, viewModel, weatherFactor)
                         }
 
                         // 3. Section Title with quick presets button
@@ -758,6 +790,7 @@ fun DashboardScreen(
                                                 isBatchMode = isBatchMode,
                                                 isSelected = selectedPlantIds.contains(plant.id),
                                                 onSelectToggle = { toggleSelection(plant.id) },
+                                                weatherAdjustmentFactor = weatherFactor,
                                                 modifier = Modifier.weight(1f)
                                             )
                                         }
@@ -780,7 +813,8 @@ fun DashboardScreen(
                                         onCardClick = { onOpenPlantDetail(plant) },
                                         isBatchMode = isBatchMode,
                                         isSelected = selectedPlantIds.contains(plant.id),
-                                        onSelectToggle = { toggleSelection(plant.id) }
+                                        onSelectToggle = { toggleSelection(plant.id) },
+                                        weatherAdjustmentFactor = weatherFactor
                                     )
                                 }
                             }
@@ -809,7 +843,8 @@ fun DashboardScreen(
                         item {
                             StatsSummaryRow(
                                 totalCareCount = uiState.totalCareActionsCount,
-                                allPlants = allPlants
+                                allPlants = allPlants,
+                                weatherFactor = weatherFactor
                             )
                         }
 
@@ -847,7 +882,7 @@ fun DashboardScreen(
 
                         // 3. Unlocked Achievements / Milestones Row
                         item {
-                            AchievementsSection(totalCareCount = careLogs.size, allPlants = allPlants)
+                            AchievementsSection(totalCareCount = careLogs.size, allPlants = allPlants, weatherFactor = weatherFactor)
                         }
 
                         // 4. Unified Care Feed Section Header
@@ -917,6 +952,7 @@ fun DashboardScreen(
         }
     }
 }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -925,7 +961,8 @@ private fun RoomGroupingFilterSection(
     selectedRoom: String?,
     allPlants: List<PlantEntity>,
     duePlants: List<PlantEntity>,
-    viewModel: PlantViewModel
+    viewModel: PlantViewModel,
+    weatherFactor: Double = 1.0
 ) {
     Column {
         Text(
@@ -943,7 +980,7 @@ private fun RoomGroupingFilterSection(
             items(roomList) { room ->
                 val isSelected = (selectedRoom == null && room == "All") || selectedRoom == room
                 val countInRoom = if (room == "All") allPlants.size else allPlants.count { it.roomName == room }
-                val dueInRoom = if (room == "All") duePlants.size else allPlants.count { it.roomName == room && it.isWaterDue() }
+                val dueInRoom = if (room == "All") duePlants.size else allPlants.count { it.roomName == room && it.isWaterDue(weatherFactor) }
 
                 FilterChip(
                     selected = isSelected,
@@ -1065,7 +1102,7 @@ fun WeeklyCareChart(logs: List<com.example.data.CareLogEntity>) {
 }
 
 @Composable
-fun StatsSummaryRow(totalCareCount: Int, allPlants: List<PlantEntity>) {
+fun StatsSummaryRow(totalCareCount: Int, allPlants: List<PlantEntity>, weatherFactor: Double = 1.0) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -1097,7 +1134,7 @@ fun StatsSummaryRow(totalCareCount: Int, allPlants: List<PlantEntity>) {
             }
         }
 
-        val dueCount = allPlants.count { it.isWaterDue() }
+        val dueCount = allPlants.count { it.isWaterDue(weatherFactor) }
         val healthScore = remember(allPlants, dueCount) {
             if (allPlants.isEmpty()) 100
             else ((allPlants.size - dueCount).toFloat() / allPlants.size * 100).toInt().coerceIn(0, 100)
@@ -1138,7 +1175,7 @@ fun StatsSummaryRow(totalCareCount: Int, allPlants: List<PlantEntity>) {
 }
 
 @Composable
-fun AchievementsSection(totalCareCount: Int, allPlants: List<PlantEntity>) {
+fun AchievementsSection(totalCareCount: Int, allPlants: List<PlantEntity>, weatherFactor: Double = 1.0) {
     Column {
         Text(
             text = "BOTANICAL MILESTONES",
@@ -1173,7 +1210,7 @@ fun AchievementsSection(totalCareCount: Int, allPlants: List<PlantEntity>) {
             }
 
             item {
-                val unlocked = allPlants.isNotEmpty() && allPlants.none { it.isWaterDue() }
+                val unlocked = allPlants.isNotEmpty() && allPlants.none { it.isWaterDue(weatherFactor) }
                 MilestoneBadge(
                     emoji = "✨",
                     title = "Perfect Thumb",

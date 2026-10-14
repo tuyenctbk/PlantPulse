@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.Canvas
@@ -53,28 +54,12 @@ fun GrowthScrapbookSheet(
     var showCameraCapture by remember { mutableStateOf(false) }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
+        contract = ActivityResultContracts.PickVisualMedia()
     ) { uri: Uri? ->
         if (uri != null) {
             viewModel.addGrowthPhoto(plant.id, uri, noteInput.ifBlank { null })
             noteInput = ""
         }
-    }
-
-    if (showCameraCapture) {
-        CameraCaptureDialog(
-            onImageCaptured = { uri ->
-                viewModel.addGrowthPhoto(plant.id, uri, noteInput.ifBlank { null })
-                noteInput = ""
-                showCameraCapture = false
-            },
-            onError = { exc ->
-                // Error handling if needed
-                showCameraCapture = false
-            },
-            onDismiss = { showCameraCapture = false }
-        )
-        return
     }
 
     ModalBottomSheet(
@@ -155,7 +140,11 @@ fun GrowthScrapbookSheet(
                         }
 
                         OutlinedButton(
-                            onClick = { photoPickerLauncher.launch("image/*") },
+                            onClick = {
+                                photoPickerLauncher.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                )
+                            },
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.weight(1f)
                         ) {
@@ -334,6 +323,20 @@ fun GrowthScrapbookSheet(
                 }
             }
         }
+    }
+
+    if (showCameraCapture) {
+        CameraCaptureDialog(
+            onImageCaptured = { uri ->
+                viewModel.addGrowthPhoto(plant.id, uri, noteInput.ifBlank { null })
+                noteInput = ""
+                showCameraCapture = false
+            },
+            onError = { _ ->
+                showCameraCapture = false
+            },
+            onDismiss = { showCameraCapture = false }
+        )
     }
 }
 

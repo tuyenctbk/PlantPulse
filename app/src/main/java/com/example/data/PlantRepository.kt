@@ -58,6 +58,19 @@ class PlantRepository(
     }
 
     suspend fun deletePlant(plant: PlantEntity) {
+        // 1. Delete associated growth photo files from storage
+        val photos = plantDao.getGrowthPhotosForPlantSync(plant.id)
+        photos.forEach { photo ->
+            runCatching { File(photo.imagePath).delete() }
+        }
+        if (!plant.imagePath.isNullOrEmpty()) {
+            runCatching { File(plant.imagePath).delete() }
+        }
+
+        // 2. Cascade delete database records
+        plantDao.deleteGrowthPhotosForPlant(plant.id)
+        plantDao.deleteCareLogsForPlant(plant.id)
+        plantDao.deleteNotesForPlant(plant.id)
         plantDao.deletePlant(plant)
     }
 
@@ -76,8 +89,8 @@ class PlantRepository(
         )
     }
 
-    suspend fun waterAllDueInRoom(roomName: String) {
-        val plants = allPlants.first().filter { it.roomName == roomName && it.isWaterDue() }
+    suspend fun waterAllDueInRoom(roomName: String, weatherMultiplier: Double = 1.0) {
+        val plants = allPlants.first().filter { it.roomName == roomName && it.isWaterDue(weatherMultiplier) }
         val now = System.currentTimeMillis()
         plants.forEach { plant ->
             val updated = plant.copy(lastWateredDate = now)
@@ -93,8 +106,8 @@ class PlantRepository(
         }
     }
 
-    suspend fun waterAllDueTotal() {
-        val plants = allPlants.first().filter { it.isWaterDue() }
+    suspend fun waterAllDueTotal(weatherMultiplier: Double = 1.0) {
+        val plants = allPlants.first().filter { it.isWaterDue(weatherMultiplier) }
         val now = System.currentTimeMillis()
         plants.forEach { plant ->
             val updated = plant.copy(lastWateredDate = now)
@@ -181,6 +194,7 @@ class PlantRepository(
     }
 
     suspend fun deleteGrowthPhoto(photo: GrowthPhotoEntity) {
+        runCatching { File(photo.imagePath).delete() }
         plantDao.deleteGrowthPhoto(photo)
     }
 

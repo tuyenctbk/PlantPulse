@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Monochromatic single-tone botanical leaf for Material You dynamic theming -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,26 C38,26 29,41 29,56 C29,70 40,79 54,79 C68,79 79,70 79,56 C79,41 70,26 54,26 Z M54,73 C42,73 34,65 34,56 C34,44 42,32 54,32 C66,32 74,44 74,56 C74,65 66,73 54,73 Z" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M23,56 L37,56 L43,47 L49,66 L55,36 L61,64 L67,51 L72,56 L85,56" />
+</vector>

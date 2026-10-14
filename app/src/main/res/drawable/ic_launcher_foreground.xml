@@ -1,23 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Potted Plant Leaf SVG Silhouette -->
-    <path
-        android:fillColor="#ECFDF5"
-        android:pathData="M54,26 C40,26 32,38 32,54 C32,68 42,76 54,76 C66,76 76,68 76,54 C76,38 68,26 54,26 Z M54,72 C44,72 36,65 36,54 C36,41 43,30 54,30 C65,30 72,41 72,54 C72,65 64,72 54,72 Z" />
+    <!-- Ambient leaf glow aura -->
     <path
         android:fillColor="#10B981"
-        android:pathData="M54,30 C45,30 38,40 38,54 C38,64 45,70 54,70 C63,70 70,64 70,54 C70,40 63,30 54,30 Z" />
-    <!-- Center Vein -->
+        android:fillAlpha="0.25"
+        android:pathData="M54,23 C36,23 26,39 26,56 C26,73 38,83 54,83 C70,83 82,73 82,56 C82,39 72,23 54,23 Z" />
+
+    <!-- Main Botanical Leaf Shape -->
+    <path
+        android:pathData="M54,26 C38,26 29,41 29,56 C29,70 40,79 54,79 C68,79 79,70 79,56 C79,41 70,26 54,26 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="54"
+                android:startY="26"
+                android:endX="54"
+                android:endY="79"
+                android:type="linear">
+                <item android:color="#34D399" android:offset="0.0" />
+                <item android:color="#10B981" android:offset="0.4" />
+                <item android:color="#059669" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Inner Leaf Highlight Curve -->
+    <path
+        android:fillColor="#ECFDF5"
+        android:fillAlpha="0.85"
+        android:pathData="M54,29 C44,29 34,42 34,56 C34,66 42,74 54,74 C50,70 45,63 45,54 C45,43 50,33 54,29 Z" />
+
+    <!-- Delicate Vein Ribs -->
     <path
         android:strokeColor="#A7F3D0"
-        android:strokeWidth="2.5"
+        android:strokeWidth="1.8"
         android:strokeLineCap="round"
-        android:pathData="M54,66 L54,36 M54,54 L44,46 M54,48 L64,42" />
-    <!-- Water droplet accent -->
+        android:pathData="M54,44 L44,38 M54,52 L43,48 M54,60 L45,58" />
+
     <path
-        android:fillColor="#38BDF8"
-        android:pathData="M68,36 C68,36 76,44 76,49 C76,53 72.4,56 68,56 C63.6,56 60,53 60,49 C60,44 68,36 68,36 Z" />
+        android:strokeColor="#A7F3D0"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M54,42 L64,36 M54,50 L65,46 M54,58 L63,56" />
+
+    <!-- Central Vein / Stem -->
+    <path
+        android:strokeColor="#ECFDF5"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:pathData="M54,76 L54,30" />
+
+    <!-- Glowing Cardiogram Heartbeat / Pulse Line (Signature PlantPulse) -->
+    <path
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="3.2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M23,56 L37,56 L43,47 L49,66 L55,36 L61,64 L67,51 L72,56 L85,56" />
+
+    <!-- Pulse Glow Shadow Line -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M23,56 L37,56 L43,47 L49,66 L55,36 L61,64 L67,51 L72,56 L85,56" />
+
+    <!-- Fresh Dew Droplet on Leaf Tip -->
+    <path
+        android:fillColor="#67E8F9"
+        android:pathData="M66,31 C66,31 71,36 71,39 C71,41.8 68.8,44 66,44 C63.2,44 61,41.8 61,39 C61,36 66,31 66,31 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M65,37 C65,37 66.5,38 66.5,39 C66.5,39.8 65.8,40.5 65,40.5 C64.2,40.5 63.5,39.8 63.5,39 C63.5,38 65,37 65,37 Z" />
 </vector>

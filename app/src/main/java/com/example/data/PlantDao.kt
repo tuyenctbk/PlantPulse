@@ -38,14 +38,23 @@ interface PlantDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCareLog(log: CareLogEntity)
 
+    @Query("DELETE FROM care_logs WHERE plantId = :plantId")
+    suspend fun deleteCareLogsForPlant(plantId: Long)
+
     @Query("SELECT * FROM growth_photos WHERE plantId = :plantId ORDER BY timestamp ASC")
     fun getGrowthPhotosForPlant(plantId: Long): Flow<List<GrowthPhotoEntity>>
+
+    @Query("SELECT * FROM growth_photos WHERE plantId = :plantId")
+    suspend fun getGrowthPhotosForPlantSync(plantId: Long): List<GrowthPhotoEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertGrowthPhoto(photo: GrowthPhotoEntity): Long
 
     @Delete
     suspend fun deleteGrowthPhoto(photo: GrowthPhotoEntity)
+
+    @Query("DELETE FROM growth_photos WHERE plantId = :plantId")
+    suspend fun deleteGrowthPhotosForPlant(plantId: Long)
 
     @Query("SELECT * FROM plant_notes WHERE plantId = :plantId ORDER BY timestamp DESC")
     fun getNotesForPlant(plantId: Long): Flow<List<PlantNoteEntity>>
@@ -55,6 +64,9 @@ interface PlantDao {
 
     @Delete
     suspend fun deletePlantNote(note: PlantNoteEntity)
+
+    @Query("DELETE FROM plant_notes WHERE plantId = :plantId")
+    suspend fun deleteNotesForPlant(plantId: Long)
 
     @Query("DELETE FROM plants")
     suspend fun clearPlants()

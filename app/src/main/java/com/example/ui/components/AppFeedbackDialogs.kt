@@ -119,7 +119,7 @@ fun RateAppDialog(
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.weight(1.3f)
                     ) {
-                        Text("Rate 5 Stars ⭐", color = Color.White)
+                        Text(if (rating == 1) "Rate 1 Star ⭐" else "Rate $rating Stars ⭐", color = Color.White)
                     }
                 }
             }

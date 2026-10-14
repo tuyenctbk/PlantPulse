@@ -153,7 +153,7 @@ fun PlantDetailSheet(
                     Spacer(modifier = Modifier.height(6.dp))
 
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        SeasonPreset.values().forEach { season ->
+                        SeasonPreset.entries.forEach { season ->
                             FilterChip(
                                 selected = selectedSeason == season,
                                 onClick = { selectedSeason = season },
@@ -174,7 +174,7 @@ fun PlantDetailSheet(
                     Spacer(modifier = Modifier.height(6.dp))
 
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        ClimateSetting.values().forEach { climate ->
+                        ClimateSetting.entries.forEach { climate ->
                             FilterChip(
                                 selected = selectedClimate == climate,
                                 onClick = { selectedClimate = climate },
@@ -455,18 +455,18 @@ fun PlantDetailSheet(
             ) {
                 Button(
                     onClick = {
+                        val newInterval = baseWaterInterval.toIntOrNull() ?: plant.waterIntervalDays
                         val updated = plant.copy(
                             name = name,
                             species = species,
                             room = roomName,
-                            waterIntervalDays = baseWaterInterval.toIntOrNull() ?: plant.waterIntervalDays,
                             fertilizeIntervalDays = baseFertilizeInterval.toIntOrNull() ?: plant.fertilizeIntervalDays,
                             mistIntervalDays = baseMistInterval.toIntOrNull() ?: plant.mistIntervalDays,
                             seasonPresetName = selectedSeason.name,
                             climateSettingName = selectedClimate.name,
                             notes = notes,
                             iconKey = selectedIconKey
-                        )
+                        ).copyUpdatedWaterInterval(newInterval, selectedSeason)
                         viewModel.saveCustomPlant(updated)
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = ForestGreen),
@@ -531,7 +531,7 @@ fun PlantDetailSheet(
 
                     if (plantNotes.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(12.dp))
-                        Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
                         Spacer(modifier = Modifier.height(12.dp))
 
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -1,18 +1,97 @@
-*.iml
-.gradle
-.kotlin
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+# ==============================================================================
+# PlantPulse - Smart Git Ignore
+# Covers: Gradle, Kotlin, Android Studio, Jetpack Compose, NDK, Keys & OS files
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Build outputs & Gradle cache
+# ------------------------------------------------------------------------------
+.gradle/
+build/
+*/build/
+**/build/
+bin/
+gen/
+out/
+captures/
+.kotlin/
+*.kotlin_module
+gradle-app.setting
+
+# ------------------------------------------------------------------------------
+# Android Packages & Artifacts
+# ------------------------------------------------------------------------------
+*.apk
+*.ap_
+*.aab
+*.abb
+*.dex
+*.class
+
+# ------------------------------------------------------------------------------
+# Signing Keys & Sensitive Secrets (NEVER COMMIT KEYS OR PASSWORDS)
+# ------------------------------------------------------------------------------
 local.properties
+/local.properties
+*.jks
+*.keystore
+*.key
+*.p12
+*.bks
+*.pem
+*.pkcs12
+secrets.properties
 .env
-debug.keystore
+.env.*
+!.env.example
+
+# ------------------------------------------------------------------------------
+# Android Studio / IntelliJ IDEA
+# ------------------------------------------------------------------------------
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# ------------------------------------------------------------------------------
+# Visual Studio Code & Other Editors
+# ------------------------------------------------------------------------------
+.vscode/
+*.code-workspace
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# ------------------------------------------------------------------------------
+# Native / C++ (NDK)
+# ------------------------------------------------------------------------------
+.externalNativeBuild/
+.cxx/
+*.so
+*.o
+
+# ------------------------------------------------------------------------------
+# Test & Diagnostics / Profiler Artifacts
+# ------------------------------------------------------------------------------
+**/build/outputs/
+**/build/reports/
+**/build/intermediates/
+
+# ------------------------------------------------------------------------------
+# Operating System Junk
+# ------------------------------------------------------------------------------
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini

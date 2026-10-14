@@ -1,6 +1,5 @@
 package com.example.ui.screens
 
-import android.content.Context
 import android.net.Uri
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -9,9 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FlipCameraAndroid
 import androidx.compose.material3.*
@@ -21,15 +18,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import com.example.ui.theme.ForestGreen
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import java.io.File
-import java.util.concurrent.Executor
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -72,7 +70,10 @@ fun CameraCaptureDialog(
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = { cameraPermissionState.launchPermissionRequest() }) {
+                    Button(
+                        onClick = { cameraPermissionState.launchPermissionRequest() },
+                        colors = ButtonDefaults.buttonColors(containerColor = ForestGreen)
+                    ) {
                         Text("Grant Permission")
                     }
                     Spacer(modifier = Modifier.height(8.dp))
@@ -93,41 +94,51 @@ private fun CameraPreviewContent(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    var lensFacing by remember { mutableStateOf(CameraSelector.LENS_FACING_BACK) }
-    val cameraExecutor: Executor = remember { Executors.newSingleThreadExecutor() }
+    var lensFacing by remember { mutableIntStateOf(CameraSelector.LENS_FACING_BACK) }
+    val cameraExecutor: ExecutorService = remember { Executors.newSingleThreadExecutor() }
     var imageCapture: ImageCapture? by remember { mutableStateOf(null) }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        AndroidView(
-            factory = { ctx ->
-                val previewView = PreviewView(ctx)
-                val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
-                cameraProviderFuture.addListener({
-                    val cameraProvider = cameraProviderFuture.get()
-                    val preview = Preview.Builder().build().also {
-                        it.setSurfaceProvider(previewView.surfaceProvider)
-                    }
-                    imageCapture = ImageCapture.Builder().build()
-                    val cameraSelector = CameraSelector.Builder()
-                        .requireLensFacing(lensFacing)
-                        .build()
+    DisposableEffect(Unit) {
+        onDispose {
+            cameraExecutor.shutdown()
+        }
+    }
 
-                    try {
-                        cameraProvider.unbindAll()
-                        cameraProvider.bindToLifecycle(
-                            lifecycleOwner,
-                            cameraSelector,
-                            preview,
-                            imageCapture
-                        )
-                    } catch (exc: Exception) {
-                        // Handle binding failure
-                    }
-                }, ContextCompat.getMainExecutor(ctx))
-                previewView
-            },
-            modifier = Modifier.fillMaxSize()
-        )
+    Box(modifier = Modifier.fillMaxSize()) {
+        key(lensFacing) {
+            AndroidView(
+                factory = { ctx ->
+                    val previewView = PreviewView(ctx)
+                    val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+                    cameraProviderFuture.addListener({
+                        val cameraProvider = cameraProviderFuture.get()
+                        val preview = Preview.Builder().build().also {
+                            it.setSurfaceProvider(previewView.surfaceProvider)
+                        }
+                        val capture = ImageCapture.Builder().build()
+                        imageCapture = capture
+
+                        val cameraSelector = CameraSelector.Builder()
+                            .requireLensFacing(lensFacing)
+                            .build()
+
+                        try {
+                            cameraProvider.unbindAll()
+                            cameraProvider.bindToLifecycle(
+                                lifecycleOwner,
+                                cameraSelector,
+                                preview,
+                                capture
+                            )
+                        } catch (exc: Exception) {
+                            // Camera binding exception
+                        }
+                    }, ContextCompat.getMainExecutor(ctx))
+                    previewView
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
 
         // Top Close Button
         IconButton(
@@ -162,7 +173,7 @@ private fun CameraPreviewContent(
                 },
                 modifier = Modifier
                     .size(48.dp)
-                    .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                    .background(Color.White.copy(alpha = 0.25f), CircleShape)
             ) {
                 Icon(Icons.Default.FlipCameraAndroid, contentDescription = "Flip Camera", tint = Color.White)
             }
@@ -194,8 +205,7 @@ private fun CameraPreviewContent(
                 },
                 modifier = Modifier
                     .size(76.dp)
-                    .clip(CircleShape)
-                    .background(Color.White),
+                    .clip(CircleShape),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.White)
             ) {
                 Box(
@@ -205,7 +215,7 @@ private fun CameraPreviewContent(
                 )
             }
 
-            // Spacer for layout balance
+            // Balance spacer
             Spacer(modifier = Modifier.size(48.dp))
         }
     }

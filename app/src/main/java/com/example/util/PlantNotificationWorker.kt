@@ -74,7 +74,8 @@ class PlantNotificationWorker(
         )
 
         val notification = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(android.R.drawable.ic_menu_agenda)
+            .setSmallIcon(R.drawable.ic_notification_leaf)
+            .setColor(context.getColor(android.R.color.holo_green_dark))
             .setContentTitle(title)
             .setContentText(message)
             .setStyle(NotificationCompat.BigTextStyle().bigText(message))

@@ -4,38 +4,87 @@
     android:height="120dp"
     android:viewportWidth="120"
     android:viewportHeight="120">
+    <!-- Rounded squircle container with rich botanical gradient -->
     <path
-        android:pathData="M15,20 C15,11.7 21.7,5 30,5 L90,5 C98.3,5 105,11.7 105,20 L105,100 C105,108.3 98.3,115 90,115 L30,115 C21.7,115 15,108.3 15,100 Z">
+        android:pathData="M24,12 L96,12 C102.6,12 108,17.4 108,24 L108,96 C108,102.6 102.6,108 96,108 L24,108 C17.4,108 12,102.6 12,96 L12,24 C12,17.4 17.4,12 24,12 Z">
         <aapt:attr name="android:fillColor">
             <gradient
-                android:startX="0"
-                android:startY="0"
-                android:endX="120"
-                android:endY="120"
+                android:startX="12"
+                android:startY="12"
+                android:endX="108"
+                android:endY="108"
                 android:type="linear">
-                <item android:color="#064E3B" android:offset="0.0" />
-                <item android:color="#047857" android:offset="0.6" />
-                <item android:color="#10B981" android:offset="1.0" />
+                <item android:color="#022C22" android:offset="0.0" />
+                <item android:color="#064E3B" android:offset="0.4" />
+                <item android:color="#065F46" android:offset="0.8" />
+                <item android:color="#059669" android:offset="1.0" />
             </gradient>
         </aapt:attr>
     </path>
-    <!-- Leaf emblem -->
+
+    <!-- Subtle inner border stroke -->
     <path
-        android:fillColor="#ECFDF5"
-        android:pathData="M60,25 C42,25 32,40 32,60 C32,75 44,85 60,85 C76,85 88,75 88,60 C88,40 78,25 60,25 Z" />
+        android:strokeColor="#34D399"
+        android:strokeAlpha="0.3"
+        android:strokeWidth="1.5"
+        android:pathData="M24,12 L96,12 C102.6,12 108,17.4 108,24 L108,96 C108,102.6 102.6,108 96,108 L24,108 C17.4,108 12,102.6 12,96 L12,24 C12,17.4 17.4,12 24,12 Z" />
+
+    <!-- Leaf Silhouette Halo -->
     <path
         android:fillColor="#10B981"
-        android:pathData="M60,30 C46,30 38,43 38,60 C38,71 46,78 60,78 C74,78 82,71 82,60 C82,43 74,30 60,30 Z" />
+        android:fillAlpha="0.3"
+        android:pathData="M60,26 C42,26 32,42 32,60 C32,77 44,87 60,87 C76,87 88,77 88,60 C88,42 78,26 60,26 Z" />
+
+    <!-- Main Botanical Leaf Shape -->
+    <path
+        android:pathData="M60,28 C44,28 35,43 35,60 C35,74 46,83 60,83 C74,83 85,74 85,60 C85,43 76,28 60,28 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="60"
+                android:startY="28"
+                android:endX="60"
+                android:endY="83"
+                android:type="linear">
+                <item android:color="#34D399" android:offset="0.0" />
+                <item android:color="#10B981" android:offset="0.5" />
+                <item android:color="#047857" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Leaf Veins -->
+    <path
+        android:strokeColor="#ECFDF5"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M60,78 L60,34" />
     <path
         android:strokeColor="#A7F3D0"
-        android:strokeWidth="3"
+        android:strokeWidth="1.8"
         android:strokeLineCap="round"
-        android:pathData="M60,74 L60,38 M60,58 L48,48 M60,52 L72,44" />
-    <!-- Pulse Line overlay -->
+        android:pathData="M60,48 L50,42 M60,58 L48,53 M60,67 L51,64" />
+    <path
+        android:strokeColor="#A7F3D0"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M60,46 L70,40 M60,56 L72,51 M60,65 L69,62" />
+
+    <!-- Glowing Cyan/White Pulse Line (PlantPulse Signature) -->
     <path
         android:strokeColor="#38BDF8"
-        android:strokeWidth="3.5"
+        android:strokeWidth="3.4"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M25,60 L42,60 L48,45 L54,75 L62,35 L68,68 L74,55 L80,60 L95,60" />
+        android:pathData="M24,60 L40,60 L47,50 L53,72 L61,38 L68,70 L74,54 L80,60 L96,60" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.6"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M24,60 L40,60 L47,50 L53,72 L61,38 L68,70 L74,54 L80,60 L96,60" />
+
+    <!-- Droplet on Leaf Tip -->
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M73,34 C73,34 78,39 78,42 C78,44.8 75.8,47 73,47 C70.2,47 68,44.8 68,42 C68,39 73,34 73,34 Z" />
 </vector>

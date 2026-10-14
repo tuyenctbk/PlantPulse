@@ -98,8 +98,22 @@ data class Plant(
         return System.currentTimeMillis() >= getNextFertilizeDueTimestamp()
     }
 
-    fun isAnyCareDue(): Boolean {
-        return isWaterDue() || isFertilizeDue()
+    fun isAnyCareDue(weatherMultiplier: Double = 1.0): Boolean {
+        return isWaterDue(weatherMultiplier) || isFertilizeDue()
+    }
+
+    fun copyUpdatedWaterInterval(newIntervalDays: Int, forSeason: SeasonPreset = getSeasonPreset()): Plant {
+        val newJson = try {
+            val json = if (seasonalWateringFrequency.isNotBlank()) org.json.JSONObject(seasonalWateringFrequency) else org.json.JSONObject()
+            json.put(forSeason.name, newIntervalDays)
+            json.toString()
+        } catch (e: Exception) {
+            seasonalWateringFrequency
+        }
+        return copy(
+            waterIntervalDays = newIntervalDays,
+            seasonalWateringFrequency = newJson
+        )
     }
 }
 

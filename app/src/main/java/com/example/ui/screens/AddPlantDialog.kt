@@ -123,7 +123,7 @@ fun AddPlantDialog(
                             showTemplateMenu = false
                         }
                     )
-                    Divider()
+                    HorizontalDivider()
                     com.example.data.DefaultPlantPresets.presets.forEach { preset ->
                         DropdownMenuItem(
                             text = {

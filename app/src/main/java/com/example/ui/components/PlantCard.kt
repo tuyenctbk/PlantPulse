@@ -2,6 +2,8 @@ package com.example.ui.components
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -41,20 +44,33 @@ fun PlantCard(
     isBatchMode: Boolean = false,
     isSelected: Boolean = false,
     onSelectToggle: () -> Unit = {},
+    weatherAdjustmentFactor: Double = 1.0,
     modifier: Modifier = Modifier
 ) {
-    val isDue = plant.isWaterDue()
-    val daysUntilWater = plant.getDaysUntilWaterDue()
+    val isDue = plant.isWaterDue(weatherAdjustmentFactor)
+    val daysUntilWater = plant.getDaysUntilWaterDue(weatherAdjustmentFactor)
     var expanded by remember { mutableStateOf(false) }
     val isDark = isSystemInDarkTheme()
 
-    val cardContainerColor = if (isSelected) {
+    val infiniteTransition = rememberInfiniteTransition(label = "plantCardPulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = if (isDue) 1.08f else 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseScale"
+    )
+
+    val targetContainerColor = if (isSelected) {
         MintGreen.copy(alpha = 0.3f)
     } else if (isDue) {
         if (isDark) Color(0xFF1E3A2F) else LightMint
     } else {
         MaterialTheme.colorScheme.surface
     }
+    val cardContainerColor by animateColorAsState(targetValue = targetContainerColor, label = "cardContainerColor")
 
     val cardContentColor = if (isDue && !isDark) {
         CharcoalText
@@ -175,7 +191,8 @@ fun PlantCard(
                         if (isDue) {
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = if (isDark) Color(0xFF881337).copy(alpha = 0.5f) else RoseMist.copy(alpha = 0.15f)
+                                color = if (isDark) Color(0xFF881337).copy(alpha = 0.5f) else RoseMist.copy(alpha = 0.15f),
+                                modifier = Modifier.scale(pulseScale)
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
@@ -339,7 +356,7 @@ fun PlantCard(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        CareType.values().forEach { care ->
+                        CareType.entries.forEach { care ->
                             AssistChip(
                                 onClick = { onLogCareClick(care) },
                                 label = {

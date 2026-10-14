@@ -5,6 +5,7 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Rich botanical emerald gradient background -->
     <path
         android:pathData="M0,0h108v108h-108z">
         <aapt:attr name="android:fillColor">
@@ -14,10 +15,22 @@
                 android:endX="108"
                 android:endY="108"
                 android:type="linear">
-                <item android:color="#064E3B" android:offset="0.0" />
-                <item android:color="#065F46" android:offset="0.5" />
+                <item android:color="#022C22" android:offset="0.0" />
+                <item android:color="#064E3B" android:offset="0.45" />
+                <item android:color="#065F46" android:offset="0.75" />
                 <item android:color="#047857" android:offset="1.0" />
             </gradient>
         </aapt:attr>
     </path>
+    <!-- Soft radiant halo rings in background -->
+    <path
+        android:strokeWidth="1.2"
+        android:strokeColor="#10B981"
+        android:strokeAlpha="0.18"
+        android:pathData="M54,54m-42,0a42,42 0 1,1 84,0a42,42 0 1,1 -84,0" />
+    <path
+        android:strokeWidth="1.0"
+        android:strokeColor="#34D399"
+        android:strokeAlpha="0.12"
+        android:pathData="M54,54m-32,0a32,32 0 1,1 64,0a32,32 0 1,1 -64,0" />
 </vector>
