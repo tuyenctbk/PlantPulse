@@ -32,7 +32,11 @@ import com.example.ui.PlantUiState
 import com.example.ui.PlantViewModel
 import com.example.ui.components.PlantCard
 import com.example.ui.components.WateringConsistencyDashboardCard
+import com.example.ui.components.WateringFrequencyChartCard
+import com.example.ui.components.BluetoothSensorDialog
+import com.example.ui.components.PlantHealthCheckerDialog
 import com.example.ui.components.WeatherWidgetCard
+import com.example.ui.screens.CareCalendarSheet
 import androidx.compose.ui.res.stringResource
 import com.example.R
 import com.example.ui.theme.*
@@ -55,6 +59,7 @@ fun DashboardScreen(
     val allPlants = uiState.plants
     val selectedRoom = uiState.selectedRoomFilter
     val searchQuery = uiState.searchQuery
+    val careLogs by viewModel.allCareLogs.collectAsState()
 
     val weatherFactor = uiState.weatherAdjustmentFactor
 
@@ -94,6 +99,10 @@ fun DashboardScreen(
 
     val dueInCurrentFilter = remember(filteredPlants, weatherFactor) { filteredPlants.filter { it.isWaterDue(weatherFactor) } }
 
+    var showBluetoothDialog by remember { mutableStateOf(false) }
+    var showCalendarSheet by remember { mutableStateOf(false) }
+    var showHealthCheckerDialog by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             var showThemeMenu by remember { mutableStateOf(false) }
@@ -119,6 +128,30 @@ fun DashboardScreen(
                     }
                 },
                 actions = {
+                    // Care Calendar Button
+                    IconButton(
+                        onClick = { showCalendarSheet = true },
+                        modifier = Modifier.testTag("care_calendar_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.CalendarMonth,
+                            contentDescription = stringResource(R.string.monthly_care_calendar),
+                            tint = ForestGreen
+                        )
+                    }
+
+                    // AI Leaf Health Checker Button
+                    IconButton(
+                        onClick = { showHealthCheckerDialog = true },
+                        modifier = Modifier.testTag("health_checker_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.LocalHospital,
+                            contentDescription = stringResource(R.string.ai_plant_health_checker),
+                            tint = ForestGreen
+                        )
+                    }
+
                     // Theme Switcher Menu
                     Box {
                         IconButton(onClick = { showThemeMenu = true }) {
@@ -171,7 +204,7 @@ fun DashboardScreen(
                         )
                     }
 
-                    // Overflow Menu (Share, Backup)
+                    // Overflow Menu (Share, Backup, Bluetooth Sensors)
                     Box {
                         IconButton(onClick = { showOverflowMenu = true }) {
                             Icon(
@@ -183,6 +216,14 @@ fun DashboardScreen(
                             expanded = showOverflowMenu,
                             onDismissRequest = { showOverflowMenu = false }
                         ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.bluetooth_sensors)) },
+                                leadingIcon = { Icon(Icons.Outlined.Bluetooth, contentDescription = null) },
+                                onClick = {
+                                    showOverflowMenu = false
+                                    showBluetoothDialog = true
+                                }
+                            )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.share_plantpulse)) },
                                 leadingIcon = { Icon(Icons.Outlined.Share, contentDescription = null) },
@@ -824,7 +865,6 @@ fun DashboardScreen(
 
                 2 -> {
                     // TAB 2: ANALYTICS & CARE TIMELINE
-                    val careLogs by viewModel.allCareLogs.collectAsState()
                     var logSearchQuery by remember { mutableStateOf("") }
 
                     LazyColumn(
@@ -872,7 +912,14 @@ fun DashboardScreen(
                             }
                         }
 
-                        // 3. 30-Day Watering Consistency & Schedule Analysis Dashboard
+                        // 3. 30-Day Watering Consistency & Frequency Visualizer Dashboard
+                        item {
+                            WateringFrequencyChartCard(
+                                plants = allPlants,
+                                careLogs = careLogs
+                            )
+                        }
+
                         item {
                             WateringConsistencyDashboardCard(
                                 plants = allPlants,
@@ -950,6 +997,30 @@ fun DashboardScreen(
                 }
             }
         }
+    }
+
+    if (showBluetoothDialog) {
+        BluetoothSensorDialog(
+            plants = allPlants,
+            onWaterPlant = { viewModel.waterPlant(it) },
+            onDismiss = { showBluetoothDialog = false }
+        )
+    }
+
+    if (showCalendarSheet) {
+        CareCalendarSheet(
+            plants = allPlants,
+            careLogs = careLogs,
+            onWaterPlant = { viewModel.waterPlant(it) },
+            onDismiss = { showCalendarSheet = false }
+        )
+    }
+
+    if (showHealthCheckerDialog) {
+        PlantHealthCheckerDialog(
+            plants = allPlants,
+            onDismiss = { showHealthCheckerDialog = false }
+        )
     }
 }
 }

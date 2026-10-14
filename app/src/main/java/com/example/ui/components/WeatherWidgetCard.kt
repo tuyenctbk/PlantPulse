@@ -1,6 +1,5 @@
 package com.example.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,12 +31,17 @@ fun WeatherWidgetCard(
     val current = weather?.current
     val temp = current?.temperature_2m ?: 22.0
     val humidity = current?.relative_humidity_2m ?: 50
+    val uv = current?.uv_index ?: 0.0
+    val solarRad = current?.surface_solar_radiation ?: 0.0
+    val precip = (current?.precipitation ?: 0.0) + (current?.rain ?: 0.0)
 
     val recommendationText = when {
-        weatherAdjustmentFactor < 0.85 -> "☀️ Hot & Dry (${temp}°C, ${humidity}% humidity) — Soil dries 20% faster. Watering schedules adjusted proactively!"
-        weatherAdjustmentFactor < 1.0 -> "🌤️ Warm conditions (${temp}°C, ${humidity}% humidity) — Plants need slightly more frequent watering."
-        weatherAdjustmentFactor > 1.15 -> "🌧️ Cool & Humid (${temp}°C, ${humidity}% humidity) — Soil retains moisture. Watering intervals extended by 25%."
-        else -> "⛅ Ideal Indoor Weather (${temp}°C, ${humidity}% humidity) — Standard plant care schedules in effect."
+        precip > 0.5 -> "🌧️ Rainy conditions (${precip}mm rain, ${humidity}% humidity) — Soil retains moisture. Reminders delayed by ~40% to prevent root rot."
+        humidity >= 80 -> "💧 High humidity (${humidity}%) — Slow soil evaporation. Reminders extended."
+        uv >= 6.0 || solarRad >= 500.0 || (temp >= 28.0 && humidity <= 40) -> "☀️ High UV (${uv}) & Solar Radiation (${solarRad.toInt()} W/m²) — Accelerated evaporation! Reminders sped up by 20%."
+        weatherAdjustmentFactor < 0.9 -> "🌤️ Warm weather (${temp}°C, ${humidity}% humidity) — Slightly faster soil drying."
+        weatherAdjustmentFactor > 1.15 -> "🌧️ Cool & Humid (${temp}°C, ${humidity}% humidity) — Extended watering intervals."
+        else -> "⛅ Optimal environment (${temp}°C, ${humidity}% humidity, UV ${uv}) — Regular schedules applied."
     }
 
     Card(
@@ -98,6 +102,19 @@ fun WeatherWidgetCard(
                 }
             }
 
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Real-time Environmental Chips from Open-Meteo
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                WeatherChip(label = "UV $uv", icon = "☀️")
+                WeatherChip(label = "${solarRad.toInt()} W/m²", icon = "🛰️")
+                WeatherChip(label = "${precip} mm rain", icon = "🌧️")
+                WeatherChip(label = "${humidity}% rh", icon = "💧")
+            }
+
             Spacer(modifier = Modifier.height(10.dp))
 
             Surface(
@@ -109,7 +126,7 @@ fun WeatherWidgetCard(
                     modifier = Modifier.padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("🌦️", fontSize = 24.sp)
+                    Text("🌤️", fontSize = 22.sp)
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
                         text = recommendationText,
@@ -119,6 +136,28 @@ fun WeatherWidgetCard(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun WeatherChip(label: String, icon: String) {
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surface
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+        ) {
+            Text(text = icon, fontSize = 11.sp)
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 11.sp
+            )
         }
     }
 }
